@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 plt.style.use('../figures/norm2.mplstyle')
+from ldpc.code_util import *
+from bposd.css import *
 
 '''
 Monte Carlo simulation for coherence time of
@@ -31,28 +33,25 @@ hz = read_pc('../data/toric_code/hz_d{}.txt'.format(d))
 
 
 ####################################################################################################
-def ham(pc):
-    '''Generate Hamiltonian from parity check matrix.'''
-    n, m = pc.shape
-    h = np.zeros((n, n))
-    for i in range(m):
-        h -= np.outer(pc[:, i], pc[:, i])
-    return h
+def energy(h, state):
+    '''Compute energy of a state with respect to a parity-check matrix.'''
+    return np.sum(np.abs(h @ state)**2)
 
-def energy(pc, state):
-    '''Compute energy of state.'''
-    return state.T @ ham(pc) @ state
+ham = ham(hx)
+quham = quham(hx, hz)
+eigvals, eigvecs = np.linalg.eigh(quham)
+np.savetxt('../data/toric_code/eigvals_d{}.txt'.format(d), eigvals)
 
 def mc(t, nsamples=100):
     '''Monte Carlo simulation for coherence time.'''
     n, m = hx.shape
-    state = np.ones(n)
-    state /= np.sqrt(n)
-    E = energy(hx, state)
-    E0 = E
-    E_list = []
-    t_list = []
     for i in range(nsamples):
+        state = np.ones(n)
+        state /= np.sqrt(n)
+        E = energy(hx, state)
+        E0 = E
+        E_list = []
+        t_list = []
         R = np.sum(gamma)
         dt = -np.log(np.random.rand())/R
         t += dt
