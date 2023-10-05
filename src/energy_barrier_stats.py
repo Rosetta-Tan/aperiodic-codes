@@ -12,9 +12,9 @@ from sys import argv
 Statistical analysis of energy barrier.
 """
 
-# d = int(argv[1])  # toric code
-log2L = int(argv[1])  # Haah's code
-L = 2**log2L
+d = int(argv[1])  # toric code
+# log2L = int(argv[1])  # Haah's code
+# L = 2**log2L
 ####################################################################################################
 # Prepare model
 ####################################################################################################
@@ -30,10 +30,10 @@ def read_pc(filepath):
         pc.append(row)
     return np.array(pc, dtype=np.uint8)
 
-# hx = read_pc(f'../data/toric_code/hx_d{d}.txt')  # toric code
-# hz = read_pc(f'../data/toric_code/hz_d{d}.txt')  # toric code
-hx = read_pc(f'../data/haah_code/hx_L{L}.txt')  # toric code
-hz = read_pc(f'../data/haah_code/hz_L{L}.txt')  # toric code
+hx = read_pc(f'../data/toric_code/hx_d{d}.txt')  # toric code
+hz = read_pc(f'../data/toric_code/hz_d{d}.txt')  # toric code
+# hx = read_pc(f'../data/haah_code/hx_L{L}.txt')  # toric code
+# hz = read_pc(f'../data/haah_code/hz_L{L}.txt')  # toric code
 qcode = css_code(hx=hx, hz=hz)  # all kinds of parameters are already obtained during init
 # logx_space = row_span(qcode.lx)
 # logz_space = row_span(qcode.lz)
@@ -45,11 +45,9 @@ rng = np.random.default_rng(seed=0)
 ####################################################################################################
 logz_space = qcode.lz
 min_weight_logz = logz_space[np.argmin(np.sum(logz_space, axis=1))]
-np.save(f'../data/haah_code/min_weight_logz_L{L}.npy', min_weight_logz)
+np.save(f'../data/toric_code/min_weight_logz_d{d}.npy', min_weight_logz)
+# np.save(f'../data/haah_code/min_weight_logz_L{L}.npy', min_weight_logz)
 selector = np.where(min_weight_logz == 1)[0]
-# ps = 1./np.arange(1, len(selector)+1, 1)
-# ps = np.linspace(1/len(selector), 1, num=len(selector)-1,endpoint=True)
-# ps = np.linspace(0.1, 0.9, num=9, endpoint=True)
 print('len of selector: ', len(selector))
 numones = np.arange(1, len(selector), 1)
 synd_weights_list = []
@@ -83,7 +81,8 @@ ax.fill_between(numones, np.min(synd_weights_list, axis=1), np.max(synd_weights_
 ax.set_xlabel('Number of ones')
 ax.set_ylabel('Syndrome weight')
 ax.set_title('Syndrome weight distribution')
-fig.savefig(f'../figures/haah_code/synd_weight_dist_L{L}.png', dpi=300)
+fig.savefig(f'../figures/toric_code/synd_weight_dist_d{d}.png', dpi=300)
+# fig.savefig(f'../figures/haah_code/synd_weight_dist_L{L}.png', dpi=300)
 plt.show()
 
 
