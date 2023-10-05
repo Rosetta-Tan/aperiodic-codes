@@ -38,7 +38,7 @@ qcode = css_code(hx=hx, hz=hz)  # all kinds of parameters are already obtained d
 # logx_space = row_span(qcode.lx)
 # logz_space = row_span(qcode.lz)
 
-num_sample = 10
+num_sample = 1000
 rng = np.random.default_rng(seed=0)
 ####################################################################################################
 # Energy cost stats for low weight logical operators
@@ -79,7 +79,7 @@ fig, ax = plt.subplots()
 ax.scatter(numones, energy_barrier_list,label='energy barrier')
 ax.scatter(numones, np.min(synd_weights_list, axis=1),label='min syndrome weight')
 ax.scatter(numones, np.max(synd_weights_list, axis=1),label='max syndrome weight')
-# plt.hist(synd_weights, bins=np.linspace(np.min(synd_weights), np.max(synd_weights), 50), density=False)
+ax.fill_between(numones, np.min(synd_weights_list, axis=1), np.max(synd_weights_list, axis=1), alpha=0.2)
 ax.set_xlabel('Number of ones')
 ax.set_ylabel('Syndrome weight')
 ax.set_title('Syndrome weight distribution')
