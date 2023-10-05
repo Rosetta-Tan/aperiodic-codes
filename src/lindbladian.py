@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 plt.style.use('../figures/norm2.mplstyle')
 from ldpc.code_util import *
 from bposd.css import *
+from bposd import bposd_decoder
 import stim
 import pymatching as pm
-from numba import njit
+from pymatching import Matching
+from numba import jit, njit
 from timeit import default_timer as timer
 
 '''
@@ -85,13 +87,36 @@ def energy(qcode, qvec, error_type='X'):
         h = qcode.hx
     return np.sum(h @ qvec % 2)
 
-def mc_activate(qcode, beta=10, tmax=10e12, nsamples=1, error_type='X'):
+def determine_system(qcode, error_type='X'):
+    '''Determine the system to be simulated.
+    - error_type: 'X' or 'Z'
+    '''
+    if error_type == 'X':
+        h = qcode.hz
+        log_op_space = row_span(qcode.lx)
+        stab_weights = np.sum(qcode.hz, axis=0)
+    elif error_type == 'Z':
+        h = qcode.hx
+        log_op_space = row_span(qcode.lz)
+        stab_weights = np.sum(qcode.hx, axis=0)
+    return h, log_op_space, stab_weights
+
+h, log_op_space, stab_weights = determine_system(qcode, error_type='X')
+
+@njit
+def distance_to_codespace(qvec, log_op_space):
+    """
+    Compute the minimum Hamming distance between a vector and the codespace.
+    """
+    return np.bitwise_or(qvec, log_op_space).sum(axis=1).min()
+
+def mc_activate(qcode, beta=10, tmax=10e12, nsamples=20, error_type='X'):
     '''Monte Carlo simulation for coherence time.
     Using activate error correction.
     Decoder: MWPM
     '''
     if error_type == 'X':
-        h = qcode.hz  # Z-type error violates X-type stabilizers
+        h = qcode.hz
         log_op_space = row_span(qcode.lx)
         stab_weights = np.sum(qcode.hz, axis=0)
     elif error_type == 'Z':
@@ -102,14 +127,8 @@ def mc_activate(qcode, beta=10, tmax=10e12, nsamples=1, error_type='X'):
     rng = np.random.default_rng(seed=0)
     taus = np.zeros(nsamples)
 
-    @njit
-    def distance_to_codespace(qvec):
-        """
-        Compute the minimum Hamming distance between a vector and the codespace.
-        """
-        return np.bitwise_or(qvec, log_op_space).sum(axis=1).min()
-
-    def evolve(qvec, t):
+    @jit
+    def update_single_step(qvec, t):
         '''Evolve the system by one time step.'''
         synd_cur = np.mod(h @ qvec, 2)
         synd_weight_cur = np.sum(synd_cur)
@@ -143,26 +162,45 @@ def mc_activate(qcode, beta=10, tmax=10e12, nsamples=1, error_type='X'):
         t = 0.
         iter = 0
         while(t <= tmax):
-            # print('iter', iter)
+            print('iter', iter)
             iter += 1
-            qvec, dt, t = evolve(qvec, t)
-            # print(dt)
-            if distance_to_codespace(qvec)==0 and (not np.all(qvec==0)):
-                taus[i] = t
-                break
+            qvec, dt, t = update_single_step(qvec, t)
         end = timer()
         print('sample {}/{}, time: {}'.format(i, nsamples, end-start))
     return taus, np.average(taus)
 
+def decoding(synd, p_physical, h, mode='mwpm'):
+    '''Decoding error correction.
+    mode: 'mwpm' or 'bposd'
+    p_physical: phenominological physical error rate,
+    obtained by taking stats of the Monte Carlo snapshots.
+    '''
+    if mode == 'mwpm':
+        pass
+    elif mode == 'bposd':
+        bpd = bposd_decoder(h, channel_probs=p_physical*np.ones(h.shape[1]),
+                            bp_method="product_sum", osd_method="osd_e", osd_order=3, max_iter=10)
+        decoding = bpd.decode(synd)
+
+def decoding_stats(cur_time, synd_batch, mode='mwpm'):
+    pass
 
 ####################################################################################################
 # Run
 ####################################################################################################
 beta = 10
-tmax = 10e12
-taus, tau = mc_activate(qcode, beta=beta, tmax=tmax, nsamples=1, error_type='X')
-np.savetxt('../data/toric_code/taus_d{}_beta_{}_tmax_{}.txt'.format(d, beta, tmax), taus)
-np.save('../data/toric_code/tau_d{}_beta_{}_tmax_{}.npy'.format(d, beta, tmax), tau)
+tmax = 1e8
+nsamples = 20
+# taus, tau = mc_activate(qcode, beta=beta, tmax=tmax, nsamples=nsamples, error_type='X')
+# np.savetxt(f'../data/toric_code/taus_d{d}_tmax_{tmax:.2e}_beta_{beta}.txt', taus)
+# np.save(f'../data/toric_code/tau_d{d}_tmax_{tmax:.2e}_beta_{beta}.npy', tau)
+
+qvec = np.random.choice([0,1], size=qcode.N).astype(int)
+synd = h@qvec % 2
+rates = np.array([-stab_weight/(1-np.exp(beta*stab_weight)) 
+                          if stab_weight!=0 else 1/beta for stab_weight in stab_weights])
+# channel_probs = rates/np.sum(rates)
+total_rate = np.sum(rates)
 
 
 ####################################################################################################
@@ -173,4 +211,9 @@ def test_quham(hx, hz):
     css.test()
 
 # test_quham(hx, hz)
+'''For toric code and configuration model x rep,
+need to see that the error channel probabilities is uniform.
+'''
+# assert np.allclose(channel_probs, 1/len(channel_probs))
+print('total rate: ', total_rate)
 
