@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+plt.style.use('../figures/norm2.mplstyle')
 from scipy.optimize import curve_fit
 from scipy.signal import find_peaks
 from sys import argv
@@ -24,5 +25,6 @@ for i, txt in enumerate(energy_barrier_opts):
     ax.annotate(f'{txt}', (Ls[i], energy_barrier_opts[i]), textcoords="offset points", xytext=(0,10), ha='center')
 ax.set_xlabel('L')
 ax.set_ylabel('Energy barrier')
+fig.tight_layout()
 fig.savefig(f'/n/home01/ytan/qmemory_simulation/figures/haah_code/energy_barrier_scaling.png', dpi=300)
 plt.show()
