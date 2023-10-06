@@ -12,9 +12,15 @@ from sys import argv
 Statistical analysis of energy barrier.
 """
 
-d = int(argv[1])  # toric code
-# log2L = int(argv[1])  # Haah's code
-# L = 2**log2L
+L = int(argv[1])
+nsamples = 1000
+hx_readpath = f'/n/home01/ytan/scratch/qmemory_simulation/data/haah_code/hx_L{L}.txt'
+hz_readpath = f'/n/home01/ytan/scratch/qmemory_simulation/data/haah_code/hz_L{L}.txt'
+energy_barrier_list_savepath = \
+    f'/n/home01/ytan/scratch/qmemory_simulation/data/haah_code/energy_barrier_list_L{L}_nsamples{nsamples:.2e}.txt'
+min_weight_logz_savepath = \
+    f'/n/home01/ytan/scratch/qmemory_simulation/data/haah_code/min_weight_logz_L{L}_nsamples{nsamples:.2e}.txt'
+
 ####################################################################################################
 # Prepare model
 ####################################################################################################
@@ -30,44 +36,35 @@ def read_pc(filepath):
         pc.append(row)
     return np.array(pc, dtype=np.uint8)
 
-hx = read_pc(f'../data/toric_code/hx_d{d}.txt')  # toric code
-hz = read_pc(f'../data/toric_code/hz_d{d}.txt')  # toric code
-# hx = read_pc(f'../data/haah_code/hx_L{L}.txt')  # toric code
-# hz = read_pc(f'../data/haah_code/hz_L{L}.txt')  # toric code
+hx = read_pc(hx_readpath)  # toric code
+hz = read_pc(hz_readpath)  # toric code
 qcode = css_code(hx=hx, hz=hz)  # all kinds of parameters are already obtained during init
-# logx_space = row_span(qcode.lx)
-# logz_space = row_span(qcode.lz)
 
-num_sample = 1000
 rng = np.random.default_rng(seed=0)
+
 ####################################################################################################
 # Energy cost stats for low weight logical operators
 ####################################################################################################
 logz_space = qcode.lz
 min_weight_logz = logz_space[np.argmin(np.sum(logz_space, axis=1))]
-np.save(f'../data/toric_code/min_weight_logz_d{d}.npy', min_weight_logz)
-# np.save(f'../data/haah_code/min_weight_logz_L{L}.npy', min_weight_logz)
 selector = np.where(min_weight_logz == 1)[0]
 print('len of selector: ', len(selector))
 numones = np.arange(1, len(selector), 1)
 synd_weights_list = []
-# synd_weights
 energy_barrier_list = []
 for numone in numones:
-    qvecs = np.zeros((num_sample, qcode.N), dtype=int)
-    synds = np.zeros((num_sample, qcode.N), dtype=int)
-    for i in range(num_sample):
+    qvecs = np.zeros((nsamples, qcode.N), dtype=int)
+    synds = np.zeros((nsamples, qcode.N), dtype=int)
+    for i in range(nsamples):
         posones = rng.choice(range(len(selector)), size=numone, replace=False)
-        bitstring = bin(sum(1<<i for i in posones))[2:].zfill(len(selector))
-        # print(bitstring)
-        qvecs[i, selector] = np.array([int(x) for x in bitstring])
-        # print(qvecs[i])
-        # qvecs[i, selector] = rng.choice([0, 1], size=len(selector), p=[p, 1-p])
+        qvecs[i, selector[posones]] = 1
     synds = np.mod(qvecs@(hx.T), 2)
     synd_weights = np.sum(synds, axis=1)
     synd_weights_list.append(synd_weights)
     energy_barrier_list.append(np.min(synd_weights))
 
+np.savetxt(energy_barrier_list_savepath, energy_barrier_list, fmt='%d')
+np.savetxt(min_weight_logz_savepath, min_weight_logz, fmt='%d')
 print(energy_barrier_list)
 
 ####################################################################################################
@@ -80,11 +77,9 @@ ax.scatter(numones, np.max(synd_weights_list, axis=1),label='max syndrome weight
 ax.fill_between(numones, np.min(synd_weights_list, axis=1), np.max(synd_weights_list, axis=1), alpha=0.2)
 ax.set_xlabel('Number of ones')
 ax.set_ylabel('Syndrome weight')
-ax.set_title('Syndrome weight distribution')
-fig.savefig(f'../figures/toric_code/synd_weight_dist_d{d}.png', dpi=300)
-# fig.savefig(f'../figures/haah_code/synd_weight_dist_L{L}.png', dpi=300)
+ax.set_title('Syndrome weight vs number of ones in logical operator')
+fig.savefig(f'/n/home01/ytan/qmemory_simulation/figures/haah_code/synd_weight_vs_numones_L{L}.png', dpi=300)
 plt.show()
-
 
 ####################################################################################################
 # Debug

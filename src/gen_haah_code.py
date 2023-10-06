@@ -8,9 +8,9 @@ from numba import njit
 import matplotlib.pyplot as plt
 from sys import argv
 
-log2L = int(argv[1])
-L = 2**log2L
-assert np.log2(L).is_integer(), "L must be a power of 2."
+# log2L = int(argv[1])
+L = int(argv[1])
+# assert np.log2(L).is_integer(), "L must be a power of 2."
 n = 2*L**3
 
 @njit
@@ -98,6 +98,6 @@ np.savetxt(f'../data/haah_code/hx_L{L}.txt', hx, fmt='%d')
 # Test
 ####################################################################################################
 '''Test ground state degeneracy'''
-log2GSD = 4*L-2
-qcode = css_code(hx=hx, hz=hz)
-assert qcode.K == log2GSD, f"Ground state degeneracy is wrong. qcode.K = {qcode.K}, log2GSD = {log2GSD}."
+# log2GSD = 4*L-2
+# qcode = css_code(hx=hx, hz=hz)
+# assert qcode.K == log2GSD, f"Ground state degeneracy is wrong. qcode.K = {qcode.K}, log2GSD = {log2GSD}."
