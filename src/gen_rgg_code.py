@@ -8,42 +8,19 @@ from ldpc.code_util import *
 from ldpc.mod2sparse import *
 from bposd.hgp import hgp
 from bposd.css import *
+import os
 from sys import argv
 import argparse
 
-
-def gen_unipartite_rgg_code(n, d, p, seed=None):
-    if seed is not None:
-        np.random.seed(seed)
-    pos = {i: np.random.uniform(size=d) for i in range(n)}
-    G = nx.Graph()
-    for i in range(n):
-        for j in range(i+1, n):
-            if np.linalg.norm(pos[i]-pos[j]) < p:
-                G.add_edge(i, j)
-    return G, pos
-
-def gen_bipartite_rgg_code(m, n, d, p, seed=None):
-    if seed is not None:
-        np.random.seed(seed)
-    pos = {i: np.random.uniform(size=d) for i in range(n+m)}
-    G = nx.Graph()
-    for i in range(n):
-        for j in range(n, n+m):
-            if np.linalg.norm(pos[i]-pos[j]) < p:
-                G.add_edge(i, j)
-    return G, pos
-
-def config_model_with_distance_bound(n, m, deg_bit, deg_check, r, seed=0):
+def config_model_with_distance_bound(n, m, deg_bit, deg_check, r, rescale_factor=1, seed=0):
     G=nx.empty_graph(n+m)
     rng = np.random.default_rng(seed)
-    
     if not n*deg_bit==m*deg_check:
         raise nx.NetworkXError(\
               'invalid degree sequences, n*deg_bit!=m*deg_check,%s,%s'\
               %(n*deg_bit,m*deg_check))
 
-    pos = {i: rng.uniform(size=2) for i in range(n+m)}
+    pos = {i: rng.uniform(low=0, high=rescale_factor, size=2) for i in range(n+m)}
     G.add_nodes_from(range(0,n+m))
     'add bipartite attribute to nodes'
     b=dict(zip(range(0,n),[0]*n))
@@ -73,70 +50,53 @@ def config_model_with_distance_bound(n, m, deg_bit, deg_check, r, seed=0):
             G.add_edge(u,v)
     return G
 
-def plot_unipartite_graph(G, pos):
-    nx.draw(G, pos, with_labels=True)
-    plt.show()
-
-def plot_bipartite_graph(G, n, m, pos):
-    print('pos: ', pos)
-    pos1 = {i: pos[i] for i in range(n)}
-    print('pos1: ', pos1)
-    pos2 = {i: pos[i] for i in range(n, n+m)}
-    print('pos2: ', pos2)
-    # nx.draw(G, pos1, with_labels=True)
-    # nx.draw(G, pos2, with_labels=True)
-
-
-import argparse
-
 parser = argparse.ArgumentParser()
-parser.add_argument('s', type=int, nargs='?', help='multiplier of deg_check (deg_bit) to get n (m)')
-# parser.add_argument('--seed', type=int, default=0, help='rng seed for generating RGG code')
+parser.add_argument('--size', dest='s', type=int, required=True, help='multiplier of deg_check (deg_bit) to get n (m)')
+parser.add_argument('--radius', dest='r', type=float, help='distance threshold for RGG code')
+parser.add_argument('--seed', dest='seed', type=int, default=0, help='rng seed for generating RGG code')
 args = parser.parse_args()
 deg_bit = 4
 deg_check = 5
-s = args.s
-n = 5*s
-m = 4*s
-r = 0.2
-# rs = [0.1, 0.2, 0.3, 0.4]
-seed = 42
+size = args.s
+r = args.r
+seed = args.seed
+n = 5*size
+m = 4*size
+savedir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code'
 
-#################################################################################################
-# Generate classical RGG code
-#################################################################################################
-G = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, seed=seed)
-pc = nx.bipartite.biadjacency_matrix(G, row_order=range(n,n+m), column_order=range(n))
-pc = pc.toarray().astype(int)
-np.savetxt(f'../data/rgg_code/hclassical_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.txt', pc, fmt='%d')
+def gen_rgg_code(n, m, deg_bit, deg_check, r, seed):
+    G = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, seed=seed)
+    pc = nx.bipartite.biadjacency_matrix(G, row_order=range(n,n+m), column_order=range(n))
+    pc = pc.toarray().astype(int)
+    savepath = os.path.join(savedir, f'hclassical_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.txt')
+    np.savetxt(savepath, pc, fmt='%d')
 
-#################################################################################################
-# Plot classical RGG code
-#################################################################################################
-# fig, ax = plt.subplots(2, 2)
-# Gs = [config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=rs[i]) for i in range(4)]
-# for i in range(4):
-#     pc = nx.bipartite.biadjacency_matrix(Gs[i], row_order=range(n,n+m), column_order=range(n))
-#     pc = pc.toarray().astype(int)
-#     np.savetxt(f'../data/rgg_code/hclassical_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{rs[i]}_seed{seed}.txt', pc, fmt='%d')
-#     row = i // 2
-#     col = i % 2
-#     G = Gs[i]
-#     pos = nx.get_node_attributes(G, 'pos')
-#     pos_nodes = [pos[i] for i in range(n)]
-#     pos_checks = [pos[i] for i in range(n, n+m)]
-#     for edge in G.edges():
-#         u, v = edge
-#         ax[row, col].plot(*zip(pos[u], pos[v]), color='k', linestyle='-', linewidth=0.5)
-#     ax[row, col].scatter(*zip(*pos_nodes), color='r', marker='o')
-#     ax[row, col].scatter(*zip(*pos_checks), color='b', marker='s')
-# plt.show()
+def gen_rgg_code_rescaled(n, m, deg_bit, deg_check, r, seed):
+    G = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, rescale_factor=np.sqrt(size/10) ,seed=seed)
+    pc = nx.bipartite.biadjacency_matrix(G, row_order=range(n,n+m), column_order=range(n))
+    pc = pc.toarray().astype(int)
+    savepath = os.path.join(savedir, f'hclassical_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.txt')
+    np.savetxt(savepath, pc, fmt='%d')
 
-#################################################################################################
-# Generate HGP of two 2D RGG codes
-#################################################################################################
-# G1, pos1 = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, seed=seed1)
-# G2, pos2 = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, seed=seed2)
-# pc1 = pc1.toarray().astype(int)
-# pc2 = pc2.toarray().astype(int)
+def min_dist(n, m, deg_bit, deg_check, r, seed):
+    G = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, seed=seed)
+    pos = nx.get_node_attributes(G, 'pos')
+    edge_list = list(G.edges())
+    dist_list = [np.linalg.norm(pos[u]-pos[v]) for u, v in edge_list]    
+    min_dist = min(dist_list)
+    savepath = os.path.join(savedir, f'mindist_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
+    np.save(savepath, min_dist)
 
+def min_dist_rescaled(n, m, deg_bit, deg_check, r, seed):
+    G = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, rescale_factor=np.sqrt(size/10), seed=seed)
+    pos = nx.get_node_attributes(G, 'pos')
+    edge_list = list(G.edges())
+    dist_list = [np.linalg.norm(pos[u]-pos[v]) for u, v in edge_list]    
+    min_dist = min(dist_list)
+    savepath = os.path.join(savedir, f'mindist_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
+    np.save(savepath, min_dist)
+
+gen_rgg_code(n, m, deg_bit, deg_check, r, seed)
+min_dist(n, m, deg_bit, deg_check, r, seed)
+gen_rgg_code_rescaled(n, m, deg_bit, deg_check, r, seed)
+min_dist_rescaled(n, m, deg_bit, deg_check, r, seed)
