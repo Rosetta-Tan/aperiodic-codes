@@ -60,8 +60,8 @@ deg_check = 5
 size = args.s
 r = args.r
 seed = args.seed
-n = 5*size
-m = 4*size
+n = deg_check*size
+m = deg_bit*size
 savedir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code'
 
 def gen_rgg_code(n, m, deg_bit, deg_check, r, seed):
