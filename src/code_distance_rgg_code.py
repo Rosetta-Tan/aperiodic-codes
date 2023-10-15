@@ -14,6 +14,12 @@ from scipy.sparse import csr_matrix, save_npz, load_npz
 from numba import njit, jit
 from timeit import default_timer as timer
 from itertools import product
+import warnings
+from numba.core.errors import NumbaWarning, NumbaDeprecationWarning, NumbaPendingDeprecationWarning
+
+warnings.simplefilter('ignore', category=NumbaWarning)
+warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
+warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 def read_pc(filepath):
     """
