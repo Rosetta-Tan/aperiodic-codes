@@ -58,6 +58,7 @@ def get_classical_code_distance(h):
         print('len of ker: ', len(ker))
         print('Start finding minimum Hamming weight while buiding codeword space ...')
         start = end
+        @jit
         def find_min_weight_while_build(matrix):
             span = []
             min_hamming_weight = np.inf
