@@ -8,11 +8,11 @@ readdir = '/n/home01/ytan/scratch/qmemory_simulation/data/rgg_code/'
 savedir = '/n/home01/ytan/scratch/qmemory_simulation/data/rgg_code/'
 
 for s in sizes:
-    for r in rs:
-        for seed in seeds:
-            file_name = os.path.join(outdir, f'bash_scripts/code_distance_rgg_code_size={s}_r={r}_seed={seed}.sh')
-            with open (file_name, 'w') as rsh:
-            rsh.write('''\
+  for r in rs:
+    for seed in seeds:
+      file_name = os.path.join(outdir, f'bash_scripts/code_distance_rgg_code_size={s}_r={r}_seed={seed}.sh')
+        with open (file_name, 'w') as rsh:
+          rsh.write('''\
 #!/bin/bash -l
 #SBATCH -n 1                # Number of cores
 #SBATCH -N 1                # Ensure that all cores are on one machine
@@ -24,4 +24,4 @@ for s in sizes:
 
 mamba activate qec_numerics
 ''')
-            rsh.write(f"python /n/home01/ytan/qmemory_simulation/src/code_distance_rgg_code.py --size {s} --radius {r} --seed {seed} --readdir {readdir} --savedir {savedir}\n")
+          rsh.write(f"python /n/home01/ytan/qmemory_simulation/src/code_distance_rgg_code.py --size {s} --radius {r} --seed {seed} --readdir {readdir} --savedir {savedir}\n")
