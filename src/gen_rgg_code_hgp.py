@@ -32,6 +32,8 @@ parser.add_argument('--radius1', dest='r1', type=float, help='distance threshold
 parser.add_argument('--radius2', dest='r2', type=float, help='distance threshold for RGG code 2')
 parser.add_argument('--seed1', dest='seed1', type=int, default=0, help='rng seed for generating RGG code 1')
 parser.add_argument('--seed2', dest='seed2', type=int, default=0, help='rng seed for generating RGG code 2')
+parser.add_argument('--readdir', dest='readdir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code', help='directory to read classical RGG codes')
+parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code', help='directory to save HGP RGG code')
 args = parser.parse_args()
 deg_bit = 4
 deg_check = 5
@@ -49,16 +51,14 @@ assert n1*deg_bit == m1*deg_check
 assert n2*deg_bit == m2*deg_check
 readdir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code'
 savedir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code'
-# readpath1 = os.path.join(readdir, f'hclassical_n{n1}_m{m1}_degbit{deg_bit}_degcheck{deg_check}_r{r1}_seed{seed1}.txt')
-# readpath2 = os.path.join(readdir, f'hclassical_n{n2}_m{m2}_degbit{deg_bit}_degcheck{deg_check}_r{r2}_seed{seed2}.txt')
+readdir = args.readdir
+savedir = args.savedir
 readpath1 = os.path.join(readdir, f'hclassical_rescaled_n{n1}_m{m1}_degbit{deg_bit}_degcheck{deg_check}_r{r1}_seed{seed1}.txt')
 readpath2 = os.path.join(readdir, f'hclassical_rescaled_n{n2}_m{m2}_degbit{deg_bit}_degcheck{deg_check}_r{r2}_seed{seed2}.txt')
 h1 = read_pc(readpath1)
 h2 = read_pc(readpath2)
 qcode = hgp(h1=h1, h2=h2)
 hx, hz = qcode.hx, qcode.hz
-# savepath_x = os.path.join(savedir, f'hxhgp_n1_{n1}_m1_{m1}_n2_{n2}_m2_{m2}_n_{hx.shape[1]}_mx_{hx.shape[0]}_degbit{deg_bit}_degcheck{deg_check}_r1_{r1}_r2_{r2}_seed1_{seed1}_seed2_{seed2}.txt')
-# savepath_z = os.path.join(savedir, f'hzhgp_n1_{n1}_m1_{m1}_n2_{n2}_m2_{m2}_n_{hx.shape[1]}_mz_{hz.shape[0]}_degbit{deg_bit}_degcheck{deg_check}_r1_{r1}_r2_{r2}_seed1_{seed1}_seed2_{seed2}.txt')
 savepath_x = os.path.join(savedir, f'hxhgp_rescaled_n1_{n1}_m1_{m1}_n2_{n2}_m2_{m2}_n_{hx.shape[1]}_mx_{hx.shape[0]}_degbit{deg_bit}_degcheck{deg_check}_r1_{r1}_r2_{r2}_seed1_{seed1}_seed2_{seed2}.txt')
 savepath_z = os.path.join(savedir, f'hzhgp_rescaled_n1_{n1}_m1_{m1}_n2_{n2}_m2_{m2}_n_{hx.shape[1]}_mz_{hz.shape[0]}_degbit{deg_bit}_degcheck{deg_check}_r1_{r1}_r2_{r2}_seed1_{seed1}_seed2_{seed2}.txt')
 # save dense format (txt)
