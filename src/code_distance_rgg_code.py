@@ -91,11 +91,10 @@ def get_classical_code_distance(h):
 
 distance_h = get_classical_code_distance(h)
 distance_hT = get_classical_code_distance(h.T)
+print(f'distance_h: {distance_h}')
+print(f'distance_hT: {distance_hT}')
 
 savepath_h = os.path.join(savedir, f'codedistance_hclassical_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
 savepath_hT = os.path.join(savedir, f'codedistance_transpose_hclassical_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
 np.save(savepath_h, distance_h)
 np.save(savepath_hT, distance_hT)
-
-print(f'distance_h: {distance_h}')
-print(f'distance_hT: {distance_hT}')
