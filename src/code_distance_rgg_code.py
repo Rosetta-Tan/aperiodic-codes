@@ -37,6 +37,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--size', dest='s', type=int, required=True, help='multiplier of deg_check (deg_bit) to get n (m)')
 parser.add_argument('--radius', dest='r', type=float, help='distance threshold for RGG code')
 parser.add_argument('--seed', dest='seed', type=int, default=0, help='rng seed for generating RGG code')
+parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code')
 args = parser.parse_args()
 deg_bit = 4
 deg_check = 5
