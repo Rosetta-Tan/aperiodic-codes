@@ -3,15 +3,15 @@ import os, sys
 sizes = range(11,21,1)
 rs = [0.2, 0.4, 0.6, 0.8]
 seeds = [0, 20]
-outdir = '/n/home01/ytan/scratch/qmemory_simulation/output'
-readdir = '/n/home01/ytan/scratch/qmemory_simulation/data/rgg_code'
-savedir = '/n/home01/ytan/scratch/qmemory_simulation/data/rgg_code'
+outdir = '/n/home01/ytan/scratch/qmemory_simulation/output/'
+readdir = '/n/home01/ytan/scratch/qmemory_simulation/data/rgg_code/'
+savedir = '/n/home01/ytan/scratch/qmemory_simulation/data/rgg_code/'
 
 for s in sizes:
-  for r in rs:
-    for seed in seeds:
-        file_name = outdir + f'bash_scripts/code_distance_rgg_code_size={s}_r={r}_seed={seed}.sh'
-        with open (file_name, 'w') as rsh:
+    for r in rs:
+        for seed in seeds:
+            file_name = os.path.join(outdir, f'bash_scripts/code_distance_rgg_code_size={s}_r={r}_seed={seed}.sh')
+            with open (file_name, 'w') as rsh:
             rsh.write('''\
 #!/bin/bash -l
 #SBATCH -n 1                # Number of cores
