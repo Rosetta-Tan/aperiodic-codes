@@ -61,16 +61,18 @@ def get_classical_code_distance(h):
         print('Code is not full rank, there are codewords')
         print('Computing codeword space basis ...')
         ker = nullspace(h)
+        print('debug: ker = ', ker)
         end = timer()
         print(f'Elapsed time for computing codeword space basis: {end-start} seconds', flush=True)
         print('len of ker: ', len(ker))
         print('Start finding minimum Hamming weight while buiding codeword space ...')
         start = end
-        @jit
+        # @jit
         def find_min_weight_while_build(matrix):
             span = []
             min_hamming_weight = np.inf
-            for row in matrix:
+            for ir, row in enumerate(matrix):
+                print('debug: ir = ', ir, 'current min_hamming_weight = ', min_hamming_weight, flush=True)  # debug
                 row_hamming_weight = np.sum(row)
                 if row_hamming_weight < min_hamming_weight:
                     min_hamming_weight = row_hamming_weight
@@ -82,6 +84,7 @@ def get_classical_code_distance(h):
                     if newvec_hamming_weight < min_hamming_weight:
                         min_hamming_weight = newvec_hamming_weight
                 span = list(np.unique(temp + span, axis=0))
+            assert len(span) == 2**len(matrix) - 1
             return min_hamming_weight
         min_hamming_weight = find_min_weight_while_build(ker)
         end = timer()

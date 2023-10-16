@@ -54,15 +54,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--size', dest='s', type=int, required=True, help='multiplier of deg_check (deg_bit) to get n (m)')
 parser.add_argument('--radius', dest='r', type=float, help='distance threshold for RGG code')
 parser.add_argument('--seed', dest='seed', type=int, default=0, help='rng seed for generating RGG code')
+parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code', help='directory to save RGG code')
 args = parser.parse_args()
-deg_bit = 4
-deg_check = 5
+deg_bit = 8
+deg_check = 10
 size = args.s
 r = args.r
 seed = args.seed
 n = deg_check*size
 m = deg_bit*size
-savedir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code'
+savedir = args.savedir
 
 def gen_rgg_code(n, m, deg_bit, deg_check, r, seed):
     G = config_model_with_distance_bound(n, m, deg_bit=deg_bit, deg_check=deg_check, r=r, seed=seed)
@@ -95,6 +96,18 @@ def min_dist_rescaled(n, m, deg_bit, deg_check, r, seed):
     min_dist = min(dist_list)
     savepath = os.path.join(savedir, f'mindist_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
     np.save(savepath, min_dist)
+
+def gen_config_model_high_girth(n, m, deg_bit, deg_check, seed):
+    """Generate LDPC code using configuration model with high girth.
+
+    Args:
+        n (_type_): _description_
+        m (_type_): _description_
+        deg_bit (_type_): _description_
+        deg_check (_type_): _description_
+        seed (_type_): _description_
+    """
+
 
 gen_rgg_code(n, m, deg_bit, deg_check, r, seed)
 min_dist(n, m, deg_bit, deg_check, r, seed)
