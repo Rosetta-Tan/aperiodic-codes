@@ -11,6 +11,8 @@ from bposd.css import *
 import os
 from sys import argv
 import argparse
+from timeit import default_timer as timer
+import json
 
 def config_model_with_distance_bound(n, m, deg_bit, deg_check, r, rescale_factor=1, seed=0):
     G=nx.empty_graph(n+m)
@@ -49,6 +51,121 @@ def config_model_with_distance_bound(n, m, deg_bit, deg_check, r, rescale_factor
         if np.linalg.norm(pos[u]-pos[v]) < r:
             G.add_edge(u,v)
     return G
+
+def config_model_noprledge(n, m, deg_bit, deg_check, r, rescale_factor=1, seed=0):
+    """Generate LDPC code using configuration model.
+
+    Args:
+        n (int): number of bit nodes = size * deg_check
+        m (int): number of check nodes = size * deg_bit
+        deg_bit (int): degree of bit nodes (McKay: t)
+        deg_check (int): degree of check nodes (McKay: s)
+        seed (int): random seed
+    """
+    rng = np.random.default_rng(seed)
+    pc = np.zeros((m, n), dtype=int)
+    # build lists of degree-repeated vertex numbers
+    stubs = [[v]*deg_bit for v in range(0,n)]
+    bit_stubs = [x for subseq in stubs for x in subseq]
+    stubs = [[v]*deg_check for v in range(n,n+m)]
+    check_stubs = [x for subseq in stubs for x in subseq]
+    # do a random pairing of stubs
+    def draw_pairs(remaining_bit_stubs, remaining_check_stubs):
+        pairings = []
+        rng.shuffle(remaining_bit_stubs)
+        for bit_stub in remaining_bit_stubs:
+            # randomly choose a check_stub to connect
+            trial = 0
+            check_stub = rng.choice(remaining_check_stubs)
+            # check this pair is not already in pairings
+            while [bit_stub, check_stub] in pairings:
+                trial += 1
+                check_stub = rng.choice(remaining_check_stubs)
+                if trial > 10000:
+                    raise ValueError('Error: too many trials')
+                    # exit(1)
+            pairings.append([bit_stub, check_stub])
+            # remove the chosen check_stub from remaining_check_stubs
+            original_length = len(remaining_check_stubs)
+            remaining_check_stubs.remove(check_stub)
+            assert len(remaining_check_stubs) == original_length - 1, 'Error: check_stub not removed or too many check_stubs removed'
+        return pairings
+            
+    remaining_bit_stubs = bit_stubs.copy()
+    remaining_check_stubs = check_stubs.copy()
+    # print('remaining_bit_stubs: ', remaining_bit_stubs)
+    # print('remaining_check_stubs: ', remaining_check_stubs)
+    pairing = draw_pairs(remaining_bit_stubs, remaining_check_stubs)
+    count = {} # count the number of times a pair appears
+    for pair in pairing:
+        count[tuple(pair)] = count.get(tuple(pair), 0) + 1
+    assert not any([count[pair] > 1 for pair in count]), 'Error: repeated pair'
+    
+    for pair in pairing:
+        pc[pair[1]-n, pair[0]] = 1
+    return pc
+
+def config_model_noprledge_with_distance_bound(n, m, deg_bit, deg_check, r, rescale_factor=1, seed=0):
+    """Generate LDPC code using configuration model with distance bound.
+
+    Args:
+        n (int): number of bit nodes = size * deg_check
+        m (int): number of check nodes = size * deg_bit
+        deg_bit (int): degree of bit nodes (McKay: t)
+        deg_check (int): degree of check nodes (McKay: s)
+        seed (int): random seed
+    """
+    rng = np.random.default_rng(seed)
+    pc = np.zeros((m, n), dtype=int)
+    pos = {i: rng.uniform(low=0, high=rescale_factor, size=2) for i in range(n+m)}
+    stubs = [[v]*deg_bit for v in range(0,n)]
+    bit_stubs = [x for subseq in stubs for x in subseq]
+    stubs = [[v]*deg_check for v in range(n,n+m)]
+    check_stubs = [x for subseq in stubs for x in subseq]
+    # do a random pairing of stubs
+    def draw_pairs(remaining_bit_stubs, remaining_check_stubs):
+        pairings = []
+        rng.shuffle(remaining_bit_stubs)
+        for bit_stub in remaining_bit_stubs:
+            # randomly choose a check_stub to connect
+            trial = 0
+            check_stub = rng.choice(remaining_check_stubs)
+            # check this pair is not already in pairings
+            while [bit_stub, check_stub] in pairings:
+                trial += 1
+                check_stub = rng.choice(remaining_check_stubs)
+                if trial > 10000:
+                    raise ValueError('Error: too many trials')
+                    # exit(1)
+            pairings.append([bit_stub, check_stub])
+            # remove the chosen check_stub from remaining_check_stubs
+            original_length = len(remaining_check_stubs)
+            remaining_check_stubs.remove(check_stub)
+            assert len(remaining_check_stubs) == original_length - 1, 'Error: check_stub not removed or too many check_stubs removed'
+        return pairings
+            
+    remaining_bit_stubs = bit_stubs.copy()
+    remaining_check_stubs = check_stubs.copy()
+    # print('remaining_bit_stubs: ', remaining_bit_stubs)
+    # print('remaining_check_stubs: ', remaining_check_stubs)
+    pairing = draw_pairs(remaining_bit_stubs, remaining_check_stubs)
+    count = {} # count the number of times a pair appears
+    for pair in pairing:
+        count[tuple(pair)] = count.get(tuple(pair), 0) + 1
+    assert not any([count[pair] > 1 for pair in count]), 'Error: repeated pair'
+    
+    for pair in pairing:
+        if np.linalg.norm(pos[pair[0]]-pos[pair[1]]) < r:
+            pc[pair[1]-n, pair[0]] = 1
+    
+    return pc, pos
+
+def balanced_ordering(n, m, deg_bit, deg_check, r, seed):
+    pass
+
+def preferential_attachment_with_distance_bound():
+    pass
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--size', dest='s', type=int, required=True, help='multiplier of deg_check (deg_bit) to get n (m)')
@@ -97,19 +214,17 @@ def min_dist_rescaled(n, m, deg_bit, deg_check, r, seed):
     savepath = os.path.join(savedir, f'mindist_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
     np.save(savepath, min_dist)
 
-def gen_config_model_high_girth(n, m, deg_bit, deg_check, seed):
-    """Generate LDPC code using configuration model with high girth.
 
-    Args:
-        n (_type_): _description_
-        m (_type_): _description_
-        deg_bit (_type_): _description_
-        deg_check (_type_): _description_
-        seed (_type_): _description_
-    """
-
-
-gen_rgg_code(n, m, deg_bit, deg_check, r, seed)
-min_dist(n, m, deg_bit, deg_check, r, seed)
-gen_rgg_code_rescaled(n, m, deg_bit, deg_check, r, seed)
-min_dist_rescaled(n, m, deg_bit, deg_check, r, seed)
+# gen_rgg_code(n, m, deg_bit, deg_check, r, seed)
+# min_dist(n, m, deg_bit, deg_check, r, seed)
+# gen_rgg_code_rescaled(n, m, deg_bit, deg_check, r, seed)
+# min_dist_rescaled(n, m, deg_bit, deg_check, r, seed)
+pc, pos = config_model_noprledge_with_distance_bound(n, m, deg_bit, deg_check, r=r, rescale_factor=np.sqrt(size/10), seed=seed)
+savename_pc = f'hclassical_noprledgelocal_n={n}_m={m}_degbit={deg_bit}_degcheck={deg_check}_r={r}_seed={seed}.txt'
+savename_pos = f'pos_noprledgelocal_n={n}_m={m}_degbit={deg_bit}_degcheck={deg_check}_r={r}_seed={seed}.json'
+savepath_pc = os.path.join(savedir, savename_pc)
+savepath_pos = os.path.join(savedir, savename_pos)
+pos = {k: v.tolist() for k, v in pos.items()}
+np.savetxt(savepath_pc, pc, fmt='%d')
+with open(savepath_pos, 'w') as f:
+    json.dump(pos, f)

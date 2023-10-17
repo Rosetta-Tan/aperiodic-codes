@@ -34,23 +34,29 @@ def read_pc(filepath):
     return np.array(pc, dtype=int)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--size', dest='s', type=int, required=True, help='multiplier of deg_check (deg_bit) to get n (m)')
-parser.add_argument('--radius', dest='r', type=float, help='distance threshold for RGG code')
-parser.add_argument('--seed', dest='seed', type=int, default=0, help='rng seed for generating RGG code')
-parser.add_argument('--readdir', dest='readdir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code')
-parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/rgg_code')
+parser.add_argument('--n', dest='n', type=int, required=True) # number of nodes
+parser.add_argument('--deglo', dest='deglo', type=int, default=3, help='lower bound of degree of each node')
+parser.add_argument('--degup', dest='degup', type=int, default=5, help='upper bound of degree of each node')
+parser.add_argument('--p', dest='p', type=float, default=0.5)
+parser.add_argument('--d', dest='d', type=int, default=6)
+parser.add_argument('--seed', dest='seed', type=int, default=0, help='random seed')
+parser.add_argument('--readdir', dest='readdir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/laplacian_code')
+parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/laplacian_code')
 args = parser.parse_args()
-deg_bit = 8
-deg_check = 10
-size = args.s
-r = args.r
+n = args.n
+deglo = args.deglo
+degup = args.degup
+p = args.p
+d = args.d
 seed = args.seed
-n = deg_check*size
-m = deg_bit*size
 readdir = args.readdir
 savedir = args.savedir
-readname = f'hclassical_noprledgelocal_n={n}_m={m}_degbit={deg_bit}_degcheck={deg_check}_seed={seed}.txt'
-savename = f'codedistance_hclassical_hclassical_noprledgelocal_n={n}_m={m}_degbit={deg_bit}_degcheck={deg_check}_see=d{seed}.npy'
+readname = f'hclassical_configurationmodel_n={n}_deglo={deglo}_degcheck={degup}_seed={seed}.txt'
+savename = f'codedistance_hclassical_noprledgelocal_n={n}_deglo={deglo}_degcheck={degup}_seed={seed}.npy'
+# readname = f'hclassical_erdosrenyi_n={n}_p={p}_seed={seed}.txt'
+# savename = f'codedistance_hclassical_erdosrenyi_n={n}_p={p}_seed={seed}.npy'
+# readname = f'hclassical_randomregular_n={n}_d={d}_seed={seed}.txt'
+# savename = f'codedistance_hclassical_randomregular_n={n}_d={d}_seed={seed}.npy'
 readpath = os.path.join(readdir, readname)
 h = read_pc(readpath)
 
@@ -94,12 +100,11 @@ def get_classical_code_distance(h):
         
         return min_hamming_weight
 
+rank_h = rank(h)
+print(f'rank_h: {rank_h}')
 distance_h = get_classical_code_distance(h)
-distance_hT = get_classical_code_distance(h.T)
 print(f'distance_h: {distance_h}')
-print(f'distance_hT: {distance_hT}')
 
-savepath_h = os.path.join(savedir, f'codedistance_hclassical_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
-savepath_hT = os.path.join(savedir, f'codedistance_transpose_hclassical_rescaled_n{n}_m{m}_degbit{deg_bit}_degcheck{deg_check}_r{r}_seed{seed}.npy')
+savepath_h = os.path.join(savedir, savename)
 np.save(savepath_h, distance_h)
-np.save(savepath_hT, distance_hT)
+
