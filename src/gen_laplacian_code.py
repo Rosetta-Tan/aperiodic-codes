@@ -15,11 +15,12 @@ import json
 from itertools import chain
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--n', dest='n', type=int, required=True) # number of nodes
+parser.add_argument('--n', dest='n', type=int, default=20) # number of nodes
 parser.add_argument('--deglo', dest='deglo', type=int, default=3, help='lower bound of degree of each node')
 parser.add_argument('--degup', dest='degup', type=int, default=5, help='upper bound of degree of each node')
 parser.add_argument('--p', dest='p', type=float, default=0.5)
 parser.add_argument('--d', dest='d', type=int, default=6)
+parser.add_argument('--L', dest='L', type=int, default=20) # linear system size in SHS's example of using sqaure lattice base graph
 parser.add_argument('--seed', dest='seed', type=int, default=0, help='random seed')
 parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/laplacian_code')
 args = parser.parse_args()
@@ -28,6 +29,7 @@ deglo = args.deglo
 degup = args.degup
 p = args.p
 d = args.d
+L = args.L
 seed = args.seed
 savedir = args.savedir
 if not os.path.exists(savedir):
@@ -100,13 +102,31 @@ def random_regular(n, d, seed=0):
     h = np.mod(laplacian, 2)
     return h, deg_sequence_actual
 
+def shs_squarelattic_basegraph(L):
+    pc = np.zeros((L, L, L, L), dtype=int) # adjacency matrix
+    for i in range(L):
+        for j in range(L):
+            pc[i, j, (i+1)%L, j] = 1
+            pc[i, j, (i-1)%L, j] = 1
+            pc[i, j, i, (j+1)%L] = 1
+            pc[i, j, i, (j-1)%L] = 1
+            pc[(i+1)%L, j, i, j] = 1
+            pc[(i-1)%L, j, i, j] = 1
+            pc[i, (j+1)%L, i, j] = 1
+            pc[i, (j-1)%L, i, j] = 1
+    pc = pc.reshape(L**2, L**2)
+    deg_sequence_actual = np.ones(L**2, dtype=int) * 4
+    return pc, deg_sequence_actual
+
 # pc, deg_sequence_actual = configuration_model_noprledge(n, deglo, degup, seed)
 # pc, deg_sequence_actual = erdos_renyi(n, p, seed)
-pc, deg_sequence_actual = random_regular(n, d, seed)
+# pc, deg_sequence_actual = random_regular(n, d, seed)
+pc, deg_sequence_actual = shs_squarelattic_basegraph(L)
 print(deg_sequence_actual)
 # savename = f'hclassical_configurationmodel_n={n}_deglo={deglo}_degcheck={degup}_seed={seed}.txt'
 # savename = f'hclassical_erdosrenyi_n={n}_p={p}_seed={seed}.txt'
-savename = f'hclassical_randomregular_n={n}_d={d}_seed={seed}.txt'
+# savename = f'hclassical_randomregular_n={n}_d={d}_seed={seed}.txt'
+savename = f'hclassical_shs_squarelattice_L={L}.txt'
 savepath = os.path.join(savedir, savename)
 np.savetxt(savepath, pc, fmt='%d')
 
