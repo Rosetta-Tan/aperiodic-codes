@@ -10,6 +10,7 @@ INSTALL_REQUIRES = [
     'ldpc',
     'bposd',
     'networkx',
+    'scikit-learn',
 ]
 
 setup(
