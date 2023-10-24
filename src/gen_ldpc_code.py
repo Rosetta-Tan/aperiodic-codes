@@ -273,7 +273,7 @@ parser.add_argument('--size', dest='s', type=int, required=True, help='multiplie
 parser.add_argument('--deg_bit', dest='deg_bit', type=int, default=4, help='degree of bit nodes')
 parser.add_argument('--deg_check', dest='deg_check', type=int, default=5, help='degree of check nodes')
 parser.add_argument('--seed', dest='seed', type=int, default=0, help='random seed')
-parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/laplacian_code')
+parser.add_argument('--savedir', dest='savedir', type=str, default='/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/ldpc_code')
 
 
 args = parser.parse_args()
