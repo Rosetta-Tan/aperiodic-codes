@@ -345,16 +345,25 @@ B = scale/2 * rot
 C = scale/2 / psi + 0j
 tiling.set_initial_tiles([BtileL(A, B, C)])
 tiling.make_tiling()
-print('Number of tiles:', len(tiling.elements))
-# tiling.write_svg('example1.svg')
-# selements = tiling.elements
-# print('The first 10 tiles:', tiling.elements[:10])
 
-points = []
-faces = []
-for e in tiling.elements:
-    point = (e.A, e.B, e.C)
-    # if point is not already in points, append it
 
-    # points.extend([e.A, e.B, e.C])
-    faces.append([len(points)-3, len(points)-2, len(points)-1])
+def get_vertices_edges(tiling):
+    vertices = []
+    edges = []
+
+    for e in tiling.elements:
+        # Vertices
+        vertices.append(e.A)
+        vertices.append(e.B)
+        vertices.append(e.C)
+        
+        # Edges
+        edges.append((e.A, e.B))
+        edges.append((e.B, e.C))
+        edges.append((e.A, e.C))
+
+        # Remove duplicates
+        vertices = list(set(vertices))
+        edges = list(set(edges))
+        
+    return vertices, edges
