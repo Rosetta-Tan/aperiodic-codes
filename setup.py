@@ -11,6 +11,7 @@ INSTALL_REQUIRES = [
     'bposd',
     'networkx',
     'scikit-learn',
+    'pycairo',
 ]
 
 setup(
