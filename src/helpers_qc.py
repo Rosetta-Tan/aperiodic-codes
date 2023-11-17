@@ -251,3 +251,24 @@ def draw_qc_transposecode_logical(faces, vertices, edges, faces_pos, h, logical_
     ax.set_yticks([])
 
     return fig, ax
+
+def vertices_boundary_cut(pt, boundary_pts_pos, eps=1e-5):
+    '''
+    Note: the boundary pts are in the format of complex numbers, and should be ordered in a clockwise manner
+    '''
+    inside = True
+    for i in range(len(boundary_pts_pos)-1):
+        pt1 = boundary_pts_pos[i]
+        pt2 = boundary_pts_pos[i+1]
+        if (pt.real-pt1.real)*(pt2.imag-pt1.imag) - (pt.imag-pt1.imag)*(pt2.real-pt1.real) < -eps:
+            inside = False
+            break
+    # check the last edge
+    pt1 = boundary_pts_pos[-1]
+    pt2 = boundary_pts_pos[0]
+    if (pt.real-pt1.real)*(pt2.imag-pt1.imag) - (pt.imag-pt1.imag)*(pt2.real-pt1.real) < -eps:
+        inside = False
+    return inside
+            
+        
+    
