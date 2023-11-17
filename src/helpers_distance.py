@@ -73,6 +73,7 @@ def get_classical_code_distance_time_limit(h):
             span = []
             min_hamming_weight = np.inf
             for ir, row in enumerate(matrix):
+                print('debug: ir = ', ir, 'current min_hamming_weight = ', min_hamming_weight, flush=True)  # debug
                 row_hamming_weight = np.sum(row)
                 if row_hamming_weight < min_hamming_weight:
                     min_hamming_weight = row_hamming_weight
@@ -84,8 +85,8 @@ def get_classical_code_distance_time_limit(h):
                     if newvec_hamming_weight < min_hamming_weight:
                         min_hamming_weight = newvec_hamming_weight
                     end = timer()
-                    # if end - start > 5:
                     if end - start > 10:
+                    # if end - start > 10000:
                         return min_hamming_weight
                 span = list(np.unique(temp + span, axis=0))
             assert len(span) == 2**len(matrix) - 1
