@@ -91,7 +91,7 @@ def get_qc_code(faces, vertices):
 
 ####################################################################################################
 start = timer()
-gen = 20
+gen = 17
 faces = []
 faces.append((0, prototype_A, prototype_B, prototype_C, prototype_D))
 for _ in range(gen):
@@ -107,6 +107,7 @@ print('h.shape = ', h.shape)
 print('k = ', h.shape[1]-rank(h))
 logical_op = []
 d_bound, logical_op = get_classical_code_distance_special_treatment(h, target_weight=h.shape[1]//8)
+# d_bound, logical_op = get_classical_code_distance_special_treatment(h, target_weight=get_classical_code_distance_time_limit(h, time_limit=30))
 print('d_bound = ', d_bound)
 fig, ax = draw_qc_code_logical(faces, vertices, edges, faces_pos, h, logical_op)
 # fig, ax = draw_qc_transposecode_logical(faces, vertices, edges, faces_pos, h, logical_op)

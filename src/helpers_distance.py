@@ -61,7 +61,7 @@ def get_classical_code_distance(h):
         
         return min_hamming_weight
     
-def get_classical_code_distance_time_limit(h):
+def get_classical_code_distance_time_limit(h, time_limit=10):
     if rank(h) == h.shape[1]:
         print('Code is full rank, no codewords')
         return np.inf
@@ -85,8 +85,7 @@ def get_classical_code_distance_time_limit(h):
                     if newvec_hamming_weight < min_hamming_weight:
                         min_hamming_weight = newvec_hamming_weight
                     end = timer()
-                    if end - start > 10:
-                    # if end - start > 10000:
+                    if end - start > time_limit:
                         return min_hamming_weight
                 span = list(np.unique(temp + span, axis=0))
             assert len(span) == 2**len(matrix) - 1
