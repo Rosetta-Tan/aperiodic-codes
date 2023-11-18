@@ -100,7 +100,9 @@ print('boundary vertices: ', boundary_vertices)
 np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
 # plot the boundary
 for i in range(len(boundary_vertices)-1):
-    plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=10)
+    plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
+plt.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
+plt.draw()
 
 ############################################################################################################
 # Post processing
@@ -148,30 +150,34 @@ k = h.shape[1] - rank(h)
 # ############################################################################################################
 # # visualize the boundary cut patch
 # ############################################################################################################
-fig, ax = plt.subplots()
+# fig, ax = plt.subplots()
 
-ax.scatter(xs_after_removal, ys_after_removal, marker='o')
-# annotate the points
-# for i in range(len(xs_after_removal)):
-#     plt.annotate(new_to_old[i], (xs_after_removal[i], ys_after_removal[i]), zorder=2)
-# for i in range(len(xs)):
-#     plt.annotate(i, (xs[i], ys[i]), zorder=2)
+# for i in range(len(boundary_vertices)-1):
+#     ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
+# ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
 
-for edge in edges:
-    plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='gray', alpha=0.5, zorder=0)
+# ax.scatter(xs_after_removal, ys_after_removal, marker='o')
+# # annotate the points
+# # for i in range(len(xs_after_removal)):
+# #     plt.annotate(new_to_old[i], (xs_after_removal[i], ys_after_removal[i]), zorder=2)
+# # for i in range(len(xs)):
+# #     plt.annotate(i, (xs[i], ys[i]), zorder=2)
 
-for edge in edges_after_removal:
-        plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='black', zorder=0)
+# for edge in edges:
+#     plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='gray', alpha=0.5, zorder=0)
 
-# face_xs = faces_pos[:, 0]
-# face_ys = faces_pos[:, 1]
-# plt.scatter(face_xs, face_ys, marker='s', color='red', zorder=0)
-# for i in range(len(faces_pos)):
-#     plt.annotate(i, (face_xs[i], face_ys[i]), zorder=2)
+# for edge in edges_after_removal:
+#         plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='black', zorder=0)
 
-ax.set_aspect('equal')
-ax.set_axis_off()
-# fig.savefig(os.path.join(savedir, 'visualize_patch_good_boundary1.pdf'))
+# # face_xs = faces_pos[:, 0]
+# # face_ys = faces_pos[:, 1]
+# # plt.scatter(face_xs, face_ys, marker='s', color='red', zorder=0)
+# # for i in range(len(faces_pos)):
+# #     plt.annotate(i, (face_xs[i], face_ys[i]), zorder=2)
+
+# ax.set_aspect('equal')
+# ax.set_axis_off()
+# # fig.savefig(os.path.join(savedir, 'visualize_patch_good_boundary1.pdf'))
 
 # ############################################################################################################
 # # visualize the logical operators
@@ -226,6 +232,10 @@ d_bound, logical_op = get_classical_code_distance_special_treatment(h, target_we
 pos_ones = np.where(logical_op == 1)[0]
 pos_ones = [new_to_old[j] for j in pos_ones]
 print('positions of one in the logical op (original indices): ', pos_ones)
+
+for i in range(len(boundary_vertices)-1):
+    ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
+ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
 
 # visualize the points
 # xs_after_removal = [x for i, x in enumerate(xs) if i not in columns_to_remove]
