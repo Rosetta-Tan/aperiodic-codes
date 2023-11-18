@@ -68,14 +68,18 @@ face_ys = faces_pos[:, 1]
 
 ax.set_aspect('equal')
 ax.set_axis_off()
+fig.tight_layout()
 # fig.set_size_inches(50, 50)
 
 ############################################################################################################
 # boundary cut by loading from file
 ############################################################################################################
 
-# boundary_vertices_indices = np.loadtxt('psi_tiling_boundary_vertices_gen20_good_boundary1.txt', dtype=int)
 # boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen15.txt', dtype=int)
+# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen15.txt', dtype=int)
+# for i in range(len(boundary_vertices)-1):
+#     ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
+
 
 # columns_to_remove = np.loadtxt('psi_tiling_columns_to_remove_gen20_boundary2.txt', dtype=int)
 # columns_to_remove = np.unique(columns_to_remove)
@@ -85,7 +89,6 @@ ax.set_axis_off()
 # rows_to_remove = np.unique(rows_to_remove)
 # rows_to_remove = sorted(rows_to_remove)
 
-
 ############################################################################################################
 # boundary cut by ginput
 ############################################################################################################
@@ -93,8 +96,15 @@ ax.set_axis_off()
 tellme('Select points on the boundary with mouse or whitespace. Points must go in clockwise direction. Press enter to finish')
 boundary_vertices = plt.ginput(n=-1, timeout=-1)
 boundary_vertices = np.asarray(boundary_vertices)
+print('boundary vertices: ', boundary_vertices)
 np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
+# plot the boundary
+for i in range(len(boundary_vertices)-1):
+    plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=10)
 
+############################################################################################################
+# Post processing
+############################################################################################################
 columns_to_remove = [iv for iv, v in enumerate(vertices_pos) if not vertex_is_in_boundary(v, boundary_pts=boundary_vertices)]
 print(len(columns_to_remove))
 rows_to_remove = []
@@ -212,7 +222,7 @@ ax.set_axis_off()
 
 # # '''Visualize low-weight logical operators'''
 fig, ax = plt.subplots()
-d_bound, logical_op = get_classical_code_distance_special_treatment(h, target_weight=get_classical_code_distance_time_limit(h, time_limit=60))
+d_bound, logical_op = get_classical_code_distance_special_treatment(h, target_weight=get_classical_code_distance_time_limit(h, time_limit=5))
 pos_ones = np.where(logical_op == 1)[0]
 pos_ones = [new_to_old[j] for j in pos_ones]
 print('positions of one in the logical op (original indices): ', pos_ones)
