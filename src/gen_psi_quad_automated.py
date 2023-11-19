@@ -155,8 +155,7 @@ ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[
 tellme('Select points on the boundary with mouse or whitespace. Points must go in clockwise direction. Press enter to finish')
 max_xlim = ax.get_xlim() # get current x_limits to set max zoom out
 max_ylim = ax.get_ylim() # get current y_limits to set max zoom out
-f = zoom_factory(ax, max_xlim, max_ylim, base_scale=1.1)
-# show()
+f = zoom_factory(ax, max_xlim, max_ylim, base_scale=1.5)
 boundary_vertices = plt.ginput(n=-1, timeout=-1)
 boundary_vertices = np.asarray(boundary_vertices)
 # print('boundary vertices: ', boundary_vertices)
