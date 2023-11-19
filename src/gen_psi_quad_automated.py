@@ -6,8 +6,8 @@ from helpers_qc import *
 import os
 from itertools import product
 import time
-import alphashape
 from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 def tellme(s):
     print(s)
@@ -80,7 +80,7 @@ fig.tight_layout()
 ############################################################################################################
 # boundary cut by loading from file
 ############################################################################################################
-
+'''
 # boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20.txt')
 boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen15.txt')
 for i in range(len(boundary_vertices)-1):
@@ -94,29 +94,28 @@ ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[
 # rows_to_remove = np.loadtxt('psi_tiling_rows_to_remove_gen20.txt', dtype=int)
 # rows_to_remove = np.unique(rows_to_remove)
 # rows_to_remove = sorted(rows_to_remove)
-
+'''
 ############################################################################################################
 # boundary cut by ginput
 ############################################################################################################
 
-# tellme('Select points on the boundary with mouse or whitespace. Points must go in clockwise direction. Press enter to finish')
-# boundary_vertices = plt.ginput(n=-1, timeout=-1)
-# boundary_vertices = np.asarray(boundary_vertices)
+tellme('Select points on the boundary with mouse or whitespace. Points must go in clockwise direction. Press enter to finish')
+boundary_vertices = plt.ginput(n=-1, timeout=-1)
+boundary_vertices = np.asarray(boundary_vertices)
 # print('boundary vertices: ', boundary_vertices)
-# np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
-# # plot the boundary
-# for i in range(len(boundary_vertices)-1):
-#     plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
-# plt.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
-# plt.draw()
+np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
+# plot the boundary
+for i in range(len(boundary_vertices)-1):
+    plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
+plt.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
+plt.draw()
 
 ############################################################################################################
 # Post processing
 ############################################################################################################
 
-alpha_shape = alphashape.alphashape(boundary_vertices, 2.0)
-
-columns_to_remove = [iv for iv, v in enumerate(vertices_pos) if not alpha_shape.contains(Point(v[0], v[1]))]
+shape = Polygon(boundary_vertices);
+columns_to_remove = [iv for iv, v in enumerate(vertices_pos) if not shape.contains(Point(v[0],v[1]))];
 rows_to_remove = []
 
 h = np.delete(h, columns_to_remove, axis=1)
