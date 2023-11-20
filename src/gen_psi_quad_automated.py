@@ -24,11 +24,13 @@ def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
         if event.button == 'up':
             # deal with zoom in
             scale_factor = 1/base_scale
-            x_scale = scale_factor / 2
+            # x_scale = scale_factor / 2
+            x_scale = scale_factor
         elif event.button == 'down':
             # deal with zoom out
             scale_factor = base_scale
-            x_scale = scale_factor * 2
+            # x_scale = scale_factor * 2
+            x_scale = scale_factor
         else:
             # deal with something that should never happen
             scale_factor = 1
@@ -97,8 +99,8 @@ readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My 
 savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/good_boundary1'
 if not os.path.exists(savedir):
     os.makedirs(savedir)
+# data = np.load(os.path.join(readdir, 'psi_tiling_gen_15.npz'))
 data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
-# data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
 
 h = data['h']  # equivalent to face_to_vertex
 vertices_pos = data['vertices_pos']
@@ -109,8 +111,6 @@ xs = vertices_pos[:, 0]
 ys = vertices_pos[:, 1]
 fig, ax = plt.subplots()
 # annotate the points
-# for i in range(len(xs_after_removal)):
-#     plt.annotate(new_to_old[i], (xs_after_removal[i], ys_after_removal[i]), zorder=2)
 # for i in range(len(xs)):
 #     plt.annotate(i, (xs[i], ys[i]), zorder=2)
 
@@ -133,9 +133,9 @@ fig.tight_layout()
 ############################################################################################################
 # boundary cut by loading from file
 ############################################################################################################
-'''
-# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20.txt')
-boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen15.txt')
+
+boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_good_trial1.txt')
+# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen15_good_trial1.txt')
 for i in range(len(boundary_vertices)-1):
     ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
 ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
@@ -147,11 +147,11 @@ ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[
 # rows_to_remove = np.loadtxt('psi_tiling_rows_to_remove_gen20.txt', dtype=int)
 # rows_to_remove = np.unique(rows_to_remove)
 # rows_to_remove = sorted(rows_to_remove)
-'''
+
 ############################################################################################################
 # boundary cut by ginput
 ############################################################################################################
-
+'''
 tellme('Select points on the boundary with mouse or whitespace. Points must go in clockwise direction. Press enter to finish')
 max_xlim = ax.get_xlim() # get current x_limits to set max zoom out
 max_ylim = ax.get_ylim() # get current y_limits to set max zoom out
@@ -159,14 +159,15 @@ f = zoom_factory(ax, max_xlim, max_ylim, base_scale=1.5)
 boundary_vertices = plt.ginput(n=-1, timeout=-1)
 boundary_vertices = np.asarray(boundary_vertices)
 # print('boundary vertices: ', boundary_vertices)
-np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
+# np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
+np.savetxt('psi_tiling_boundary_vertices_gen20.txt', boundary_vertices, fmt='%f')
 # plot the boundary
 for i in range(len(boundary_vertices)-1):
     plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
 plt.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
 
 plt.draw()
-
+'''
 ############################################################################################################
 # Post processing
 ############################################################################################################
@@ -305,9 +306,9 @@ ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[
 # xs_after_removal = [x for i, x in enumerate(xs) if i not in columns_to_remove]
 # ys_after_removal = [y for i, y in enumerate(ys) if i not in columns_to_remove]
 ax.scatter(xs_after_removal, ys_after_removal, marker='o')
-# annotate the points
-for i in range(len(xs)):
-    ax.annotate(i, (xs[i], ys[i]), zorder=2)
+# # annotate the points
+# for i in range(len(xs)):
+#     ax.annotate(i, (xs[i], ys[i]), zorder=2)
 ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', color='pink', zorder=1)
 
 for edge in edges:
@@ -322,10 +323,10 @@ for edge in edges_after_removal:
     ax.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='black', zorder=0)
 ax.set_aspect('equal')
 ax.set_axis_off()
-# fig.set_size_inches(30,30)
 savename = f'low_weight_logical_op.pdf'
 savepath = os.path.join(savedir, savename)
-# fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
+fig.set_size_inches(50,50)
+fig.savefig(savename, bbox_inches='tight', pad_inches=0)
 
 
 plt.show()
