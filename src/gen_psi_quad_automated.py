@@ -130,6 +130,11 @@ ax.scatter(xs, ys, marker='o', s=10)
 for edge in edges:
     plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='gray', alpha=0.5, zorder=0)
 
+for iface in range(num_faces):
+    polygon_xs = [xs[ivertex] if h[iface, ivertex] == 1 else np.nan for ivertex in range(num_vertices)]
+    polygon_ys = [ys[ivertex] if h[iface, ivertex] == 1 else np.nan for ivertex in range(num_vertices)]
+    ax.fill(polygon_xs, polygon_ys, alpha=0.5, zorder=1)
+
 face_xs = faces_pos[:, 0]
 face_ys = faces_pos[:, 1]
 # plt.scatter(face_xs, face_ys, marker='s', color='red', zorder=0)

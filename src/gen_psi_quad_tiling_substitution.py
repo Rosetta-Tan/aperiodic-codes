@@ -9,8 +9,8 @@ from timeit import default_timer as timer
 import os
 
 # global variables
-# savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-savedir = '..\data\qc_code\psi_tiling'
+savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+# savedir = '..\data\qc_code\psi_tiling'
 
 psi = root_scalar(lambda x: x**3 - x**2 - 1, bracket=[1, 2], method='brentq').root
 sqrt_psi = np.sqrt(psi)
@@ -92,13 +92,14 @@ def get_qc_code(faces, vertices):
 
 ####################################################################################################
 start = timer()
-gen = 22
+gen = 21
 faces = []
 faces.append((0, prototype_A, prototype_B, prototype_C, prototype_D))
 for _ in range(gen):
     faces = subdivide(faces)
 
 faces_pos = [np.array([get_geometric_center(face).real, get_geometric_center(face).imag]) for face in faces]
+faces_ctg = [face[0] for face in faces]
 vertices = get_vertices(faces)
 edges = get_edges(faces, vertices)
 edges_repr_indices = get_edges_repr_indices(faces, vertices)
@@ -121,4 +122,4 @@ plt.show()
 vertices_pos = np.array([[v.real, v.imag] for v in vertices])
 savename = f'psi_tiling_gen_{gen}.npz'
 savepath = os.path.join(savedir, savename)
-np.savez(savepath, vertices_pos=vertices_pos, faces_pos=faces_pos, edges=edges_repr_indices, h=h)
+np.savez(savepath, vertices_pos=vertices_pos, faces_pos=faces_pos, edges=edges_repr_indices, h=h, faces_ctg=faces_ctg)
