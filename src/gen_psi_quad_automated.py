@@ -6,7 +6,7 @@ from helpers_qc import *
 import os
 from itertools import product
 import time
-from shapely.geometry import Point
+from shapely.geometry import Point, MultiPoint
 from shapely.geometry.polygon import Polygon
 
 def tellme(s):
@@ -69,27 +69,6 @@ def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
     #return the function
     return zoom_fun
 
-def vertex_is_in_boundary(pt, boundary_pts, eps=1e-5):
-    '''
-    Note: the boundary pts are in the format of complex numbers, and should be ordered in a clockwise manner
-    '''
-    which_edge = -1000
-    inside = True
-    for i in range(len(boundary_pts)-1):
-        pt1 = boundary_pts[i]
-        pt2 = boundary_pts[i+1]
-        if (pt[0]-pt1[0])*(pt2[1]-pt[1]) - (pt[1]-pt1[1])*(pt2[0]-pt[0]) < -eps:
-            inside = False
-            which_edge = i
-            return inside, which_edge
-            break
-    # check the last edge
-    pt1 = boundary_pts[-1]
-    pt2 = boundary_pts[0]
-    if (pt[0]-pt1[0])*(pt2[1]-pt[1]) - (pt[1]-pt1[1])*(pt2[0]-pt[0]) < -eps:
-        inside = False
-        which_edge = len(boundary_pts)-1
-    return inside, which_edge
 
 '''Gen15'''
 # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
@@ -117,6 +96,7 @@ h = data['h']  # equivalent to face_to_vertex
 vertices_pos = data['vertices_pos']
 faces_pos = data['faces_pos']
 edges = data['edges']
+faces_ctg = data['faces_ctg']
 num_faces, num_vertices = h.shape
 xs = vertices_pos[:, 0]
 ys = vertices_pos[:, 1]
@@ -131,15 +111,20 @@ for edge in edges:
     plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='gray', alpha=0.5, zorder=0)
 
 for iface in range(num_faces):
-    polygon_xs = [xs[ivertex] if h[iface, ivertex] == 1 else np.nan for ivertex in range(num_vertices)]
-    polygon_ys = [ys[ivertex] if h[iface, ivertex] == 1 else np.nan for ivertex in range(num_vertices)]
-    ax.fill(polygon_xs, polygon_ys, alpha=0.5, zorder=1)
+    polygon_inds = np.where(h[iface, :] == 1)[0]
+    polygon = MultiPoint(vertices_pos[polygon_inds]).convex_hull
+    if faces_ctg[iface] == 0:
+        plt.fill(*polygon.exterior.xy, alpha=0.5, color='#4377BC')
+    elif faces_ctg[iface] == 1:
+        plt.fill(*polygon.exterior.xy, alpha=0.5, color='#7C287D')
+    elif faces_ctg[iface] == 2:
+        plt.fill(*polygon.exterior.xy, alpha=0.5, color='#93C83E')
 
 face_xs = faces_pos[:, 0]
 face_ys = faces_pos[:, 1]
 # plt.scatter(face_xs, face_ys, marker='s', color='red', zorder=0)
 # for i in range(len(faces_pos)):
-#     plt.annotate(i, (face_xs[i], face_ys[i]), zorder=2)
+#     plt.annotate(i, (face_xs[i], face_ys[i]), zorder=2)``
 
 ax.set_aspect('equal')
 ax.set_axis_off()
@@ -169,7 +154,8 @@ boundary_vertices = plt.ginput(n=-1, timeout=-1)
 boundary_vertices = np.asarray(boundary_vertices)
 # print('boundary vertices: ', boundary_vertices)
 # np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
-np.savetxt('psi_tiling_boundary_vertices_gen20.txt', boundary_vertices, fmt='%f')
+# np.savetxt('psi_tiling_boundary_vertices_gen20.txt', boundary_vertices, fmt='%f')
+np.savetxt('psi_tiling_boundary_vertices_gen21.txt', boundary_vertices, fmt='%f')
 # plot the boundary
 for i in range(len(boundary_vertices)-1):
     plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)

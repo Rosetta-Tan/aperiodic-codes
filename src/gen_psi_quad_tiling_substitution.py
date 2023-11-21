@@ -9,8 +9,8 @@ from timeit import default_timer as timer
 import os
 
 # global variables
-savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-# savedir = '..\data\qc_code\psi_tiling'
+# savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+savedir = '..\data\qc_code\psi_tiling'
 
 psi = root_scalar(lambda x: x**3 - x**2 - 1, bracket=[1, 2], method='brentq').root
 sqrt_psi = np.sqrt(psi)
