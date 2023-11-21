@@ -9,7 +9,8 @@ from timeit import default_timer as timer
 import os
 
 # global variables
-savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+# savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+savedir = '..\data\qc_code\psi_tiling'
 
 psi = root_scalar(lambda x: x**3 - x**2 - 1, bracket=[1, 2], method='brentq').root
 sqrt_psi = np.sqrt(psi)
@@ -91,7 +92,7 @@ def get_qc_code(faces, vertices):
 
 ####################################################################################################
 start = timer()
-gen = 17
+gen = 22
 faces = []
 faces.append((0, prototype_A, prototype_B, prototype_C, prototype_D))
 for _ in range(gen):
