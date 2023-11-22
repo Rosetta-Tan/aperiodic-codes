@@ -14,6 +14,11 @@ def tellme(s):
     plt.title(s)
     plt.draw()
 
+def mouse_event(event):
+    print(f'x: {event.xdata} and y: {event.ydata}')
+    plt.scatter(event.xdata, event.ydata, marker='o', color='red', zorder=1)
+    plt.draw()
+
 def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
     def zoom_fun(event):
         # get the current x and y limits
@@ -76,17 +81,35 @@ def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
 # readdir = '..\data\qc_code\psi_tiling'
 # savedir = '..\\figures\qc_code\psi_tiling\gen_15\\boundary_trial2'
 # data = np.load(os.path.join(readdir, 'psi_tiling_gen_15.npz'))
+'''Gen 19'''
+# # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+# # # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/good_boundary1'
+# # readdir = '..\data\qc_code\psi_tiling'
+# readdir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling"
+# # savedir = '..\\figures\qc_code\psi_tiling\gen_19\\type_5_horizontal'
+# savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type5_typeC"
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type5_localmodtypeC"
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type5_typeC_corrected"
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\localmodtype5_typeC_1771"
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type6_typeC"
+# data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
 '''Gen 20'''
-# # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-# # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/good_boundary1'
+# # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+# # # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/good_boundary1'
 # readdir = '..\data\qc_code\psi_tiling'
-# savedir = '..\\figures\qc_code\psi_tiling\gen_20\\type_5_horizontal'
+# # savedir = '..\\figures\qc_code\psi_tiling\gen_20\\type_5_horizontal'
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC"
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_localmodtypeC"
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC_corrected"
+# savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\localmodtype5_typeC_1771"
+# # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type6_typeC"
 # data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
 '''Gen 21'''
 # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
 # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_21/good_boundary'
-readdir = '..\data\qc_code\psi_tiling'
-savedir = '..\\figures\qc_code\psi_tiling\gen_21\\type_5_horizontal'
+# readdir = '..\data\qc_code\psi_tiling'
+readdir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling"
+savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_21\\type5_typeC"
 data = np.load(os.path.join(readdir, 'psi_tiling_gen_21.npz'))
 if not os.path.exists(savedir):
     os.makedirs(savedir)
@@ -135,12 +158,13 @@ fig.tight_layout()
 # boundary cut by loading from file
 ############################################################################################################
 
-# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen15_type5_horizontal.txt')
-# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_type5_horizontal.txt')
-# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen21_type5_horizontal.txt')
+# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen19_type5_typeC.txt')
+# # boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_localmodtype5_typeC_171.txt')
 # for i in range(len(boundary_vertices)-1):
 #     ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
 # ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
+# f = zoom_factory(ax, ax.get_xlim(), ax.get_ylim(), base_scale=1.5)
+# cid = fig.canvas.mpl_connect('button_press_event', mouse_event)
 
 ############################################################################################################
 # boundary cut by ginput
@@ -154,6 +178,7 @@ boundary_vertices = plt.ginput(n=-1, timeout=-1)
 boundary_vertices = np.asarray(boundary_vertices)
 # print('boundary vertices: ', boundary_vertices)
 # np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
+# np.savetxt('psi_tiling_boundary_vertices_gen19.txt', boundary_vertices, fmt='%f')
 # np.savetxt('psi_tiling_boundary_vertices_gen20.txt', boundary_vertices, fmt='%f')
 np.savetxt('psi_tiling_boundary_vertices_gen21.txt', boundary_vertices, fmt='%f')
 # plot the boundary
@@ -218,9 +243,10 @@ k = h.shape[1] - rank(h)
 # logical_op_coeffs = np.asarray(list(product([0, 1], repeat=k)))
 
 
-# ############################################################################################################
-# # visualize the boundary cut patch
-# ############################################################################################################
+############################################################################################################
+# visualize the boundary cut patch
+############################################################################################################
+
 # fig, ax = plt.subplots()
 
 # for i in range(len(boundary_vertices)-1):
@@ -254,59 +280,61 @@ k = h.shape[1] - rank(h)
 # # visualize the logical operators
 # ############################################################################################################
 
-# '''Visualize all logical operators'''
-# logical_basis = row_basis(nullspace(h))
-# print(logical_basis.shape)
-# logical_op_coeffs = np.asarray(list(product([0, 1], repeat=len(logical_basis))))
-# for i in range(logical_op_coeffs.shape[0]):
-# # for i in range(60,64):
-#     logical_op = (logical_op_coeffs[i]@logical_basis).flatten() % 2
-#     pos_ones = np.where(logical_op == 1)[0]
-#     pos_ones = [new_to_old[j] for j in pos_ones]
-#     print('positions of one in the logical op (original indices): ', pos_ones)
+'''Visualize all logical operators'''
+logical_basis = row_basis(nullspace(h))
+print(logical_basis.shape)
+logical_op_coeffs = np.asarray(list(product([0, 1], repeat=len(logical_basis))))
+for i in range(len(logical_op_coeffs)):
+# for i in range(60,64):
+    logical_op = np.mod((logical_op_coeffs[i]@logical_basis).flatten(), 2)
+    pos_ones = np.where(logical_op == 1)[0]
+    if len(pos_ones) > h.shape[1]//8:
+        continue
+    pos_ones = [new_to_old[j] for j in pos_ones]
+    print(f'{i}-th logical op, positions of ones (original indices): ', pos_ones)
 
-#     # visualize the points
-#     fig, ax = plt.subplots()
-#     ax.scatter(xs_after_removal, ys_after_removal, marker='o')
-#     # # annotate the points
-#     for ipt in range(len(xs)):
-#         if ipt not in columns_to_remove:
-#             plt.annotate(old_to_new[ipt], (xs[ipt], ys[ipt]), color='purple', zorder=2)
+    # visualize the points
+    fig, ax = plt.subplots()
+    ax.scatter(xs_after_removal, ys_after_removal, marker='o')
+    # # annotate the points
+    # for ipt in range(len(xs)):
+    #     if ipt not in columns_to_remove:
+    #         plt.annotate(old_to_new[ipt], (xs[ipt], ys[ipt]), color='purple', zorder=2)
 
-#     ax.scatter(faces_xs_after_removal, faces_ys_after_removal, marker='s', color='red', zorder=0)
-#     # # annotate the remaining faces
-#     # for iface in range(num_faces):
-#     #     if iface not in rows_to_remove:
-#     #         plt.annotate(faces_old_to_new[iface], (face_xs[iface], face_ys[iface]), zorder=2)
+    # ax.scatter(faces_xs_after_removal, faces_ys_after_removal, marker='s', color='red', zorder=0)
+    # # annotate the remaining faces
+    # for iface in range(num_faces):
+    #     if iface not in rows_to_remove:
+    #         plt.annotate(faces_old_to_new[iface], (face_xs[iface], face_ys[iface]), zorder=2)
     
-#     # plot the codeword
-#     ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', color='pink', zorder=1)
+    # plot the codeword
+    ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', color='pink', zorder=1)
 
-#     for edge in edges:
-#         plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='gray', alpha=0.5, zorder=0)
+    for edge in edges:
+        plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='gray', alpha=0.5, zorder=0)
 
-#     edges_after_removal = []
-#     for edge in edges:
-#         if edge[0] not in columns_to_remove and edge[1] not in columns_to_remove:
-#             edges_after_removal.append([edge[0], edge[1]])
+    edges_after_removal = []
+    for edge in edges:
+        if edge[0] not in columns_to_remove and edge[1] not in columns_to_remove:
+            edges_after_removal.append([edge[0], edge[1]])
 
-#     for edge in edges_after_removal:
-#         plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='black', zorder=0)
+    for edge in edges_after_removal:
+        plt.plot([xs[edge[0]], xs[edge[1]]], [ys[edge[0]], ys[edge[1]]], color='black', zorder=0)
 
-#     for ih in range(h.shape[0]):
-#         for jh in range(h.shape[1]):
-#             if h[ih,jh] == 1:
-#                 ax.plot([faces_xs_after_removal[ih], xs_after_removal[jh]], [faces_ys_after_removal[ih], ys_after_removal[jh]], color='gray', linewidth=2, zorder=-1)
-#     ax.set_aspect('equal')
-#     ax.set_axis_off()
-#     ax.set_title(f'logical operator {i}')
-#     fig.set_size_inches(30,30)
-#     savename = f'logical_op_{i}.pdf'
-#     savepath = os.path.join(savedir, savename)
-#     fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
+    # for ih in range(h.shape[0]):
+    #     for jh in range(h.shape[1]):
+    #         if h[ih,jh] == 1:
+    #             ax.plot([faces_xs_after_removal[ih], xs_after_removal[jh]], [faces_ys_after_removal[ih], ys_after_removal[jh]], color='gray', linewidth=2, zorder=-1)
+    ax.set_aspect('equal')
+    ax.set_axis_off()
+    ax.set_title(f'logical operator {i}')
+    fig.set_size_inches(30,30)
+    savename = f'logical_op_{i}.pdf'
+    savepath = os.path.join(savedir, savename)
+    fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
 
 
-# # '''Visualize low-weight logical operators'''
+'''Visualize low-weight logical operators'''
 fig, ax = plt.subplots()
 d_bound, logical_op = get_classical_code_distance_special_treatment(h, target_weight=get_classical_code_distance_time_limit(h, time_limit=60))
 pos_ones = np.where(logical_op == 1)[0]
