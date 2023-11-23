@@ -196,10 +196,10 @@ def draw_qc_code_logical(faces, vertices, edges, faces_pos, h, logical_op):
 
     for edge in edges:
         ax.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], color='k', linewidth=0.5)
-    for i in range(len(faces)):
-        for j in range(len(vertices)):
-            if h[i,j] == 1:
-                ax.plot([faces_pos[i][0], vertices_pos[j][0]], [faces_pos[i][1], vertices_pos[j][1]], color='gray', linewidth=3, zorder=-1)
+    # for i in range(len(faces)):
+    #     for j in range(len(vertices)):
+    #         if h[i,j] == 1:
+    #             ax.plot([faces_pos[i][0], vertices_pos[j][0]], [faces_pos[i][1], vertices_pos[j][1]], color='gray', linewidth=3, zorder=-1)
     
     ones = [i for i in range(len(logical_op)) if logical_op[i] == 1]
     x = [vertices_pos[i][0] for i in ones]
@@ -221,10 +221,10 @@ def draw_qc_transposecode_logical(faces, vertices, edges, faces_pos, h, logical_
     ax.scatter(np.array(vertices_pos)[:,0], np.array(vertices_pos)[:,1], marker='s', c='r')
     for edge in edges:
         ax.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], color='k', linewidth=0.5)
-    for i in range(len(vertices)):
-        for j in range(len(faces)):
-            if h[i,j] == 1:
-                ax.plot([faces_pos[j][0], vertices_pos[i][0]], [faces_pos[j][1], vertices_pos[i][1]], color='gray', linewidth=3, zorder=-1)
+    # for i in range(len(vertices)):
+    #     for j in range(len(faces)):
+    #         if h[i,j] == 1:
+    #             ax.plot([faces_pos[j][0], vertices_pos[i][0]], [faces_pos[j][1], vertices_pos[i][1]], color='gray', linewidth=3, zorder=-1)
     
     # # debug: use different colors for different ctgs of faces
     # for i, face in enumerate(faces):
