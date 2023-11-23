@@ -9,72 +9,6 @@ import time
 from shapely.geometry import Point, MultiPoint
 from shapely.geometry.polygon import Polygon
 
-def tellme(s):
-    print(s)
-    plt.title(s)
-    plt.draw()
-
-def mouse_event(event):
-    print(f'x: {event.xdata} and y: {event.ydata}')
-    plt.scatter(event.xdata, event.ydata, marker='o', color='red', zorder=1)
-    plt.draw()
-
-def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
-    def zoom_fun(event):
-        # get the current x and y limits
-        cur_xlim = ax.get_xlim()
-        cur_ylim = ax.get_ylim()
-        xdata = event.xdata # get event x location
-        ydata = event.ydata # get event y location
-        if event.button == 'up':
-            # deal with zoom in
-            scale_factor = 1/base_scale
-            # x_scale = scale_factor / 2
-            x_scale = scale_factor
-        elif event.button == 'down':
-            # deal with zoom out
-            scale_factor = base_scale
-            # x_scale = scale_factor * 2
-            x_scale = scale_factor
-        else:
-            # deal with something that should never happen
-            scale_factor = 1
-            print(event.button)
-        # set new limits
-        new_width = (cur_xlim[1] - cur_xlim[0]) * x_scale
-        new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
-
-        relx = (cur_xlim[1] - xdata) / (cur_xlim[1] - cur_xlim[0])
-        rely = (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])
-
-        if xdata - new_width * (1 - relx) > max_xlim[0]:
-            x_min = xdata - new_width * (1 - relx)
-        else:
-            x_min = max_xlim[0]
-        if xdata + new_width * (relx) < max_xlim[1]:
-            x_max = xdata + new_width * (relx)
-        else:
-            x_max = max_xlim[1]
-        if ydata - new_height * (1 - rely) > max_ylim[0]:
-            y_min = ydata - new_height * (1 - rely)
-        else:
-            y_min = max_ylim[0]
-        if ydata + new_height * (rely) < max_ylim[1]:
-            y_max = ydata + new_height * (rely)
-        else:
-            y_max = max_ylim[1]
-        ax.set_xlim([x_min, x_max])
-        ax.set_ylim([y_min, y_max])
-        ax.figure.canvas.draw()
-
-    fig = ax.get_figure() # get the figure of interest
-    # attach the call back
-    fig.canvas.mpl_connect('scroll_event',zoom_fun)
-
-    #return the function
-    return zoom_fun
-
-
 '''Gen15'''
 # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
 # # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_15/good_boundary'\
@@ -82,8 +16,8 @@ def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
 # savedir = '..\\figures\qc_code\psi_tiling\gen_15\\boundary_trial2'
 # data = np.load(os.path.join(readdir, 'psi_tiling_gen_15.npz'))
 '''Gen 19'''
-readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_19/type5_typeC'
+# readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+# savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_19/type5_typeC'
 # # readdir = '..\data\qc_code\psi_tiling'
 # readdir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling"
 # # savedir = '..\\figures\qc_code\psi_tiling\gen_19\\type_5_horizontal'
@@ -92,10 +26,10 @@ savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My 
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type5_typeC_corrected"
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\localmodtype5_typeC_1771"
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type6_typeC"
-data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
+# data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
 '''Gen 20'''
-# # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-# # # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/good_boundary1'
+readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/good_boundary1'
 # readdir = '..\data\qc_code\psi_tiling'
 # # savedir = '..\\figures\qc_code\psi_tiling\gen_20\\type_5_horizontal'
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC"
@@ -103,7 +37,7 @@ data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC_corrected"
 # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\localmodtype5_typeC_1771"
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type6_typeC"
-# data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
+data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
 '''Gen 21'''
 # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
 # # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_21/good_boundary'
@@ -124,10 +58,6 @@ num_faces, num_vertices = h.shape
 xs = vertices_pos[:, 0]
 ys = vertices_pos[:, 1]
 fig, ax = plt.subplots()
-# annotate the points
-# for i in range(len(xs)):
-#     plt.annotate(i, (xs[i], ys[i]), zorder=2)
-
 ax.scatter(xs, ys, marker='o', s=10)
 
 for edge in edges:
@@ -155,38 +85,25 @@ fig.tight_layout()
 # fig.set_size_inches(50, 50)
 
 ############################################################################################################
-# boundary cut by loading from file
+# boundary finding
 ############################################################################################################
 
-boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen19_type5_typeC.txt')
-# boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_localmodtype5_typeC_171.txt')
-for i in range(len(boundary_vertices)-1):
-    ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
-ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
-f = zoom_factory(ax, ax.get_xlim(), ax.get_ylim(), base_scale=1.5)
-cid = fig.canvas.mpl_connect('button_press_event', mouse_event)
+# def get_vertex_localenv(vertex_ind):
+#     '''Get the local environment of a vertex'''
+#     localenv = []
+#     for iface in range(num_faces):
+#         if h[iface, vertex_ind] == 1:
+#             localenv.append(iface)
+#     return localenv
 
-############################################################################################################
-# boundary cut by ginput
-############################################################################################################
+# def move_right(cur_vertex):
+#     return next_vertex
 
-# tellme('Select points on the boundary with mouse or whitespace. Points must go in clockwise direction. Press enter to finish')
-# max_xlim = ax.get_xlim() # get current x_limits to set max zoom out
-# max_ylim = ax.get_ylim() # get current y_limits to set max zoom out
-# f = zoom_factory(ax, max_xlim, max_ylim, base_scale=1.5)
-# boundary_vertices = plt.ginput(n=-1, timeout=-1)
-# boundary_vertices = np.asarray(boundary_vertices)
-# # print('boundary vertices: ', boundary_vertices)
-# # np.savetxt('psi_tiling_boundary_vertices_gen15.txt', boundary_vertices, fmt='%f')
-# # np.savetxt('psi_tiling_boundary_vertices_gen19.txt', boundary_vertices, fmt='%f')
-# # np.savetxt('psi_tiling_boundary_vertices_gen20.txt', boundary_vertices, fmt='%f')
-# np.savetxt('psi_tiling_boundary_vertices_gen21.txt', boundary_vertices, fmt='%f')
-# # plot the boundary
-# for i in range(len(boundary_vertices)-1):
-#     plt.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
-# plt.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
+# def move_down(cur_vertex):
+#     return next_vertex
 
-# plt.draw()
+# def gen_boundary(start):
+
 
 ############################################################################################################
 # Post processing
