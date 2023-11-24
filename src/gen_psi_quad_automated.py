@@ -188,6 +188,80 @@ cid = fig.canvas.mpl_connect('button_press_event', mouse_event)
 
 # plt.draw()
 
+
+############################################################################################################
+# patch selection
+############################################################################################################
+def close(v1, v2):
+    v1 = np.asarray(v1)
+    v2 = np.asarray(v2)
+    return np.linalg.norm(v1-v2) < 1e-5
+
+def get_local_env_right(v):
+    # get the vertex inex from the coordinates
+    v = np.asarray(v)
+    v_ind = np.where(np.linalg.norm(vertices_pos - v, axis=1) < 1e-5)[0][0]
+
+    faces = []
+	for iface in range(h.shape[0]):
+        if h[iface, v] == 1:
+        
+	if num(ctg == 1) == 3 and num(ctg == 2) == 0 and num(ctg == 3) == 1:
+		local_env = 1
+	elif num(ctg == 1) == 3 and num(ctg == 2) == 1 and num(ctg == 3) == 1:
+		local_env = 2
+	elif num(ctg == 1) == 3 and num(ctg == 2) == 2 and num(ctg == 3) == 0:
+		local_env = 3
+	elif num(ctg == 1) == 1 and num(ctg == 2) == 1 and num(ctg == 3) == 2:
+		local_env = 4
+    
+
+def find_vertex_order_in_local_env(v, order):
+	pass	
+
+def move_right(v):
+    local_env = get_local_env(v)
+    if local_env == 1 or local_env == 2 or local_env == 3:
+        # 找到这个点是哪个quad的A点，然后返回这个quad的C点
+        quad = find_vertex_order_in_local_env(v, 1)
+        return quad[3]
+    elif local_env == 4:
+        # 找到这个点是哪个quad的D点，然后返回这个quad的B点
+        quad = find_vertex_order_in_local_env(v, 4)
+        return quad[2]
+
+def move_down(v):
+    local_env = get_local_env(v)
+    if local_env == 1 or local_env == 2 or local_env == 3:
+        # 找到这个点是哪个quad的B点，然后返回这个quad的D点
+        quad = find_vertex_order_in_local_env(v, 2)
+        return quad[4]
+    elif local_env == 4:
+        # 找到这个点是哪个quad的A点，然后返回这个quad的C点
+        quad = find_vertex_order_in_local_env(v, 1)
+        return quad[3]
+
+def terminable(v):
+    pass
+	
+def patch_selection(v_start, step_h, step_v):
+    v_right = v_start.copy()
+    v_down = v_start.copy()
+    for _ in range(step_h):
+        v_right = move_right(v_right)
+    for _ in range(step_v):
+        v_down = move_down(v_down)
+    if not terminable(v_right):
+        v_right = move_right(v_right)
+    if not terminable(v_down):
+        v_down = move_down(v_down)
+
+    
+        
+	
+	
+
+
 ############################################################################################################
 # Post processing
 ############################################################################################################
