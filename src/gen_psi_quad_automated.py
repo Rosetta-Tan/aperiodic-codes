@@ -82,8 +82,8 @@ def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
 # savedir = '..\\figures\qc_code\psi_tiling\gen_15\\boundary_trial2'
 # data = np.load(os.path.join(readdir, 'psi_tiling_gen_15.npz'))
 '''Gen 19'''
-readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_19/type5_typeC'
+# readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+# savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_19/type5_typeC'
 # # readdir = '..\data\qc_code\psi_tiling'
 # readdir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling"
 # # savedir = '..\\figures\qc_code\psi_tiling\gen_19\\type_5_horizontal'
@@ -92,10 +92,10 @@ savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My 
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type5_typeC_corrected"
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\localmodtype5_typeC_1771"
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type6_typeC"
-data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
+# data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
 '''Gen 20'''
-# # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-# # # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/good_boundary1'
+readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/type5_typeC'
 # readdir = '..\data\qc_code\psi_tiling'
 # # savedir = '..\\figures\qc_code\psi_tiling\gen_20\\type_5_horizontal'
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC"
@@ -103,7 +103,7 @@ data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC_corrected"
 # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\localmodtype5_typeC_1771"
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type6_typeC"
-# data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
+data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
 '''Gen 21'''
 # # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
 # # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_21/good_boundary'
@@ -119,14 +119,15 @@ h = data['h']  # equivalent to face_to_vertex
 vertices_pos = data['vertices_pos']
 faces_pos = data['faces_pos']
 edges = data['edges']
-faces_ctg = data['faces_ctg']
+FACES = data['faces']
+FACES = [(int(ctg.real), np.array([A.real, A.imag]), np.array([B.real, B.imag]), np.array([C.real, C.imag]), np.array([D.real, D.imag])) for ctg, A, B, C, D in FACES]
 num_faces, num_vertices = h.shape
 xs = vertices_pos[:, 0]
 ys = vertices_pos[:, 1]
 fig, ax = plt.subplots()
 # annotate the points
-# for i in range(len(xs)):
-#     plt.annotate(i, (xs[i], ys[i]), zorder=2)
+for i in range(len(xs)):
+    plt.annotate(i, (xs[i], ys[i]), zorder=2)
 
 ax.scatter(xs, ys, marker='o', s=10)
 
@@ -136,11 +137,11 @@ for edge in edges:
 for iface in range(num_faces):
     polygon_inds = np.where(h[iface, :] == 1)[0]
     polygon = MultiPoint(vertices_pos[polygon_inds]).convex_hull
-    if faces_ctg[iface] == 0:
+    if FACES[iface][0] == 0:
         plt.fill(*polygon.exterior.xy, alpha=0.5, color='#4377BC')
-    elif faces_ctg[iface] == 1:
+    elif FACES[iface][0] == 1:
         plt.fill(*polygon.exterior.xy, alpha=0.5, color='#7C287D')
-    elif faces_ctg[iface] == 2:
+    elif FACES[iface][0] == 2:
         plt.fill(*polygon.exterior.xy, alpha=0.5, color='#93C83E')
 
 face_xs = faces_pos[:, 0]
@@ -158,11 +159,11 @@ fig.tight_layout()
 # boundary cut by loading from file
 ############################################################################################################
 
-boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen19_type5_typeC.txt')
+boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_type5_typeC.txt')
 # boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_localmodtype5_typeC_171.txt')
-for i in range(len(boundary_vertices)-1):
-    ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
-ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
+# for i in range(len(boundary_vertices)-1):
+#     ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
+# ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
 f = zoom_factory(ax, ax.get_xlim(), ax.get_ylim(), base_scale=1.5)
 cid = fig.canvas.mpl_connect('button_press_event', mouse_event)
 
@@ -187,80 +188,6 @@ cid = fig.canvas.mpl_connect('button_press_event', mouse_event)
 # plt.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[-1][1], boundary_vertices[0][1]], color='red', zorder=0)
 
 # plt.draw()
-
-
-############################################################################################################
-# patch selection
-############################################################################################################
-def close(v1, v2):
-    v1 = np.asarray(v1)
-    v2 = np.asarray(v2)
-    return np.linalg.norm(v1-v2) < 1e-5
-
-def get_local_env_right(v):
-    # get the vertex inex from the coordinates
-    v = np.asarray(v)
-    v_ind = np.where(np.linalg.norm(vertices_pos - v, axis=1) < 1e-5)[0][0]
-
-    faces = []
-	for iface in range(h.shape[0]):
-        if h[iface, v] == 1:
-        
-	if num(ctg == 1) == 3 and num(ctg == 2) == 0 and num(ctg == 3) == 1:
-		local_env = 1
-	elif num(ctg == 1) == 3 and num(ctg == 2) == 1 and num(ctg == 3) == 1:
-		local_env = 2
-	elif num(ctg == 1) == 3 and num(ctg == 2) == 2 and num(ctg == 3) == 0:
-		local_env = 3
-	elif num(ctg == 1) == 1 and num(ctg == 2) == 1 and num(ctg == 3) == 2:
-		local_env = 4
-    
-
-def find_vertex_order_in_local_env(v, order):
-	pass	
-
-def move_right(v):
-    local_env = get_local_env(v)
-    if local_env == 1 or local_env == 2 or local_env == 3:
-        # 找到这个点是哪个quad的A点，然后返回这个quad的C点
-        quad = find_vertex_order_in_local_env(v, 1)
-        return quad[3]
-    elif local_env == 4:
-        # 找到这个点是哪个quad的D点，然后返回这个quad的B点
-        quad = find_vertex_order_in_local_env(v, 4)
-        return quad[2]
-
-def move_down(v):
-    local_env = get_local_env(v)
-    if local_env == 1 or local_env == 2 or local_env == 3:
-        # 找到这个点是哪个quad的B点，然后返回这个quad的D点
-        quad = find_vertex_order_in_local_env(v, 2)
-        return quad[4]
-    elif local_env == 4:
-        # 找到这个点是哪个quad的A点，然后返回这个quad的C点
-        quad = find_vertex_order_in_local_env(v, 1)
-        return quad[3]
-
-def terminable(v):
-    pass
-	
-def patch_selection(v_start, step_h, step_v):
-    v_right = v_start.copy()
-    v_down = v_start.copy()
-    for _ in range(step_h):
-        v_right = move_right(v_right)
-    for _ in range(step_v):
-        v_down = move_down(v_down)
-    if not terminable(v_right):
-        v_right = move_right(v_right)
-    if not terminable(v_down):
-        v_down = move_down(v_down)
-
-    
-        
-	
-	
-
 
 ############################################################################################################
 # Post processing
@@ -316,7 +243,7 @@ k = h.shape[1] - rank(h)
 # print(logical_basis.shape)
 # logical_op_coeffs = np.asarray(list(product([0, 1], repeat=k)))
 
-
+"""
 ############################################################################################################
 # visualize the boundary cut patch
 ############################################################################################################
@@ -370,7 +297,12 @@ for i in range(len(logical_op_coeffs)):
     # visualize the points
     fig, ax = plt.subplots()
     ax.scatter(xs_after_removal, ys_after_removal, s=100, marker='o')
-    # # annotate the points
+    
+    # # annnotate all the points
+    # for ipt in range(len(xs)):
+    #     plt.annotate(ipt, (xs[ipt], ys[ipt]), zorder=2)
+    
+    # # annotate the remaining points
     # for ipt in range(len(xs)):
     #     if ipt not in columns_to_remove:
     #         plt.annotate(old_to_new[ipt], (xs[ipt], ys[ipt]), color='purple', zorder=2)
@@ -423,9 +355,9 @@ ax.plot([boundary_vertices[-1][0], boundary_vertices[0][0]], [boundary_vertices[
 # xs_after_removal = [x for i, x in enumerate(xs) if i not in columns_to_remove]
 # ys_after_removal = [y for i, y in enumerate(ys) if i not in columns_to_remove]
 ax.scatter(xs_after_removal, ys_after_removal, s=100, marker='o')
-# # annotate the points
-# for ipt in range(len(xs)):
-#     ax.annotate(ipt, (xs[ipt], ys[ipt]), zorder=2)
+# annotate the points
+for ipt in range(len(xs)):
+    ax.annotate(ipt, (xs[ipt], ys[ipt]), zorder=2)
 ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', s=100, color='pink', zorder=1)
 
 for edge in edges:
@@ -445,5 +377,8 @@ savepath = os.path.join(savedir, savename)
 fig.set_size_inches(30,30)
 fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
 
-
+"""
+fig.set_size_inches(40,40)
+fig.savefig(os.path.join(savedir, 'visualize_patch.pdf'), bbox_inches='tight', pad_inches=0)
 plt.show()
+
