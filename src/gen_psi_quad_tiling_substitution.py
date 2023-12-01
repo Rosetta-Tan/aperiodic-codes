@@ -93,7 +93,7 @@ def get_qc_code(faces, vertices):
 
 ####################################################################################################
 start = timer()
-gen = 24
+gen = 26
 faces = []
 faces.append((0, prototype_A, prototype_B, prototype_C, prototype_D))
 for _ in range(gen):
