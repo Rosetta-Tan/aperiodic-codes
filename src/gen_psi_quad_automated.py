@@ -94,8 +94,9 @@ def zoom_factory(ax, max_xlim, max_ylim, base_scale = 2.):
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_19\\type6_typeC"
 # data = np.load(os.path.join(readdir, 'psi_tiling_gen_19.npz'))
 '''Gen 20'''
-readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/type5_typeC'
+# readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+# savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/type5_typeC'
+# savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_20/ensemble'
 # readdir = '..\data\qc_code\psi_tiling'
 # # savedir = '..\\figures\qc_code\psi_tiling\gen_20\\type_5_horizontal'
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC"
@@ -103,14 +104,14 @@ savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My 
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type5_typeC_corrected"
 # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\localmodtype5_typeC_1771"
 # # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_20\\type6_typeC"
-data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
+# data = np.load(os.path.join(readdir, 'psi_tiling_gen_20.npz'))
 '''Gen 21'''
-# # readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
-# # savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_21/good_boundary'
+readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/'
+savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/psi_tiling/gen_21/autopatch'
 # # readdir = '..\data\qc_code\psi_tiling'
 # readdir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling"
 # savedir = "G:\My Drive\\from_cannon\qmemory_simulation\data\qc_code\psi_tiling\gen_21\\type5_typeC"
-# data = np.load(os.path.join(readdir, 'psi_tiling_gen_21.npz'))
+data = np.load(os.path.join(readdir, 'psi_tiling_gen_21.npz'))
 if not os.path.exists(savedir):
     os.makedirs(savedir)
 
@@ -146,20 +147,21 @@ for iface in range(num_faces):
 
 face_xs = faces_pos[:, 0]
 face_ys = faces_pos[:, 1]
-# plt.scatter(face_xs, face_ys, marker='s', color='red', zorder=0)
-# for i in range(len(faces_pos)):
-#     plt.annotate(i, (face_xs[i], face_ys[i]), zorder=2)``
+plt.scatter(face_xs, face_ys, marker='s', color='red', zorder=0)
+for i in range(len(faces_pos)):
+    plt.annotate(i, (face_xs[i], face_ys[i]), zorder=2)
 
 ax.set_aspect('equal')
 ax.set_axis_off()
 fig.tight_layout()
-# fig.set_size_inches(50, 50)
+fig.set_size_inches(40, 40)
+fig.savefig(os.path.join(savedir, 'visualize_patch.pdf'))
 
 ############################################################################################################
 # boundary cut by loading from file
 ############################################################################################################
 
-boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_type5_typeC.txt')
+boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_ensemble_trial.txt')
 # boundary_vertices = np.loadtxt('psi_tiling_boundary_vertices_gen20_localmodtype5_typeC_171.txt')
 # for i in range(len(boundary_vertices)-1):
 #     ax.plot([boundary_vertices[i][0], boundary_vertices[i+1][0]], [boundary_vertices[i][1], boundary_vertices[i+1][1]], color='red', zorder=0)
@@ -243,7 +245,7 @@ k = h.shape[1] - rank(h)
 # print(logical_basis.shape)
 # logical_op_coeffs = np.asarray(list(product([0, 1], repeat=k)))
 
-"""
+
 ############################################################################################################
 # visualize the boundary cut patch
 ############################################################################################################
@@ -376,9 +378,3 @@ savename = f'low_weight_logical_op.pdf'
 savepath = os.path.join(savedir, savename)
 fig.set_size_inches(30,30)
 fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
-
-"""
-fig.set_size_inches(40,40)
-fig.savefig(os.path.join(savedir, 'visualize_patch.pdf'), bbox_inches='tight', pad_inches=0)
-plt.show()
-
