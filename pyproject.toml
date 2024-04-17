@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "aperiodic-codes"
+version = "0.1.0"
+description = ""
+authors = ["Rosetta-Tan <rosetta_tan@outlook.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ldpc
+bposd
+networkx
+
+[tool.poetry.extras]
+web = ["flask", "flask_cors"]
+graphics = ["matplotlib, pycairo"]

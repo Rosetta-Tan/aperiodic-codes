@@ -1,0 +1,45 @@
+/* Reset the box-sizing across all elements to border-box */
+html {
+    box-sizing: border-box;
+}
+
+/* Ensure all elements inherit box-sizing from html */
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+/* Reset body margins and apply top and bottom padding */
+body {
+    margin: 0; /* Remove default margin to reset browser default styling */
+    padding-top: 50px; /* Top padding */
+    padding-bottom: 50px; /* Bottom padding */
+    height: 100vh; /* Set the body height to fill the viewport height */
+    display: flex; /* Enables the use of flex properties for alignment */
+    flex-direction: column; /* Stack children vertically */
+    justify-content: center; /* Center children vertically in the available space */
+    align-items: center; /* Center children horizontally */
+}
+
+/* Style for centering and managing content */
+.centered-content {
+    width: 100%; /* Full width to align with the body setting */
+    max-width: 1200px; /* Maximum width of the content for readability and layout management */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Prevents content from spilling out */
+}
+
+/* Style for image container to control image scaling and placement */
+.image-container {
+    width: 50%; /* Set the container width to be 50% of its parent */
+    margin: 0 auto; /* Center the container horizontally */
+}
+
+/* Ensures images within the container scale correctly */
+.image-container img {
+    width: 100%; /* Full width of the container */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove any extra space below the image */
+}

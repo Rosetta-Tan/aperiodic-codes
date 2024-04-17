@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import os
 from timeit import default_timer as timer
 from ldpc.mod2 import row_basis, nullspace, rank
+from typing import List, Tuple
 
-def subdivide(triangles):
-    result = []
+def subdivide(triangles: List[Tuple[int, complex, complex, complex]]) -> List[Tuple[int, complex, complex, complex]]:
+    result: List[Tuple[int, complex, complex, complex]] = []
     for ctg, A, B, C in triangles:
         if ctg == 0:
             P1 = A + 2/5*(B-A)
@@ -21,35 +22,44 @@ def subdivide(triangles):
             result += [F1, F2, F3, F4, F5] 
     return result
 
-def close(a, b):
+def close(a: complex, b: complex) -> bool:
+    # function to check if two complex numbers are close
     return np.linalg.norm(a-b) < 1e-5
 
-def get_vertices(faces):
-    vertices = []
+def get_geometric_center(face):
+    return (face[1]+face[2]+face[3])/3
+
+def vertices_on_face(face, vertices):
+    '''
+    This function is needed because after subdivision, the vertices at the same position may not unique anymore.
+    '''
+    vs_on_f = [face[0]] # ctg
+    for v in vertices:
+        if close(face[1], v):
+            vs_on_f.append(v)
+    for v in vertices:
+        if close(face[2], v):
+            vs_on_f.append(v)
+    for v in vertices:
+        if close(face[3], v):
+            vs_on_f.append(v)
+    return vs_on_f
+
+def get_vertices(faces: List[Tuple[int, complex, complex, complex]]) -> List[complex]:
+    # function to get the vertices of the list of faces
+    vertices: List[complex] = []
     for face in faces:
         vertices.append(face[1])
         vertices.append(face[2])
         vertices.append(face[3])
-    vertices_new = []
+    vertices_new: List[complex] = []
     for v in vertices:
         if not any(close(v, v2) for v2 in vertices_new):
             vertices_new.append(v)
     return vertices_new
 
-def get_edges(faces, vertices):
-    def vertices_on_face(face, vertices):
-        vs_on_f = [face[0]] # ctg
-        for v in vertices:
-            if close(face[1], v):
-                vs_on_f.append(v)
-        for v in vertices:
-            if close(face[2], v):
-                vs_on_f.append(v)
-        for v in vertices:
-            if close(face[3], v):
-                vs_on_f.append(v)
-        return vs_on_f
-
+def get_edges(faces: List[Tuple[int, complex, complex, complex]], vertices: List[complex]) -> List[Tuple[complex, complex]]:
+    # function to get the edges of the faces
     edges = []
     for face in faces:
         vs_on_f = vertices_on_face(face, vertices)
@@ -57,9 +67,6 @@ def get_edges(faces, vertices):
         edges.append((vs_on_f[2], vs_on_f[3]))
         edges.append((vs_on_f[3], vs_on_f[1])) 
     return edges
-
-def get_geometric_center(face):
-    return (face[1]+face[2]+face[3])/3
 
 def get_qc_code(faces, vertices):
     h = np.zeros((len(faces), len(vertices)))
@@ -303,7 +310,7 @@ def get_classical_code_transpose_distance_special_treatment(h, gen, target_weigh
         print(f'Elapsed time for finding minimum Hamming weight while buiding codeword space : {end-start} seconds', flush=True)
         return min_hamming_weight, logical_op
     
-savedir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/qc_code/pinwheel'
+savedir = '../data/20240415_pinwheel_tus'
 subdir = f'gen={gen}'
 if not os.path.exists(os.path.join(savedir, subdir)):
     os.makedirs(os.path.join(savedir, subdir))
