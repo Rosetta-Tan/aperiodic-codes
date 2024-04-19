@@ -3,106 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>Aperiodic Codes</title>
-    <style>
-        body {
-            font-family: 'Times New Roman', serif;
-            margin: 0;
-            padding-top: 10vh;
-            padding-bottom: 10vh;
-        }
-        .centered-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 120vh;
-        }
-        .image-container {
-            margin-top: auto;
-            margin-bottom: auto;
-        }
-        .image-container img {
-            /* margin: auto; */
-            width: 500px;
-            height: auto;
-        }
-        canvas {
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="../static/styles.css">
+    <script type="module" src="../static/js/index.js"></script>
+    <!-- <script src="{{ url_for('static', filename='js/index.js') }}"></script> -->
 </head>
 <body>
     <div class="centered-content">
         <h1>Aperiodic Codes</h1>
-        <div class="image-container">
-            <img src="../static/assets/imgs/penrose_tiling.svg" alt="penrose_tiling">
-        </div>
-        <canvas id="myCanvas" width="1000" height="500" style="border:1px solid #000000;"></canvas>
     </div>
-    <script>
-        var canvas = document.getElementById('myCanvas');
-        var ctx = canvas.getContext('2d');
-        var canvasWidth = canvas.width;
-        var canvasHeight = canvas.height;
-      
-        fetch('/data/', {
-              mode: 'cors',  // Consider using CORS if you need to process the data
-          })
-          .then(response => {
-              if (!response.ok) {
-                  throw new Error('Network response was not ok: ' + response.statusText);
-              }
-              return response.json();  // This line won't execute correctly due to 'no-cors'
-          })
-          .then(data => {
-              var vertices = data.vertices;
-              var edges = data.edges;
-      
-              // Calculate bounds
-              var minX = Math.min(...vertices.map(v => v.x));
-              var maxX = Math.max(...vertices.map(v => v.x));
-              var minY = Math.min(...vertices.map(v => v.y));
-              var maxY = Math.max(...vertices.map(v => v.y));
-      
-              // Calculate scale and offset
-              var scaleX = canvasWidth / (maxX - minX);
-              var scaleY = canvasHeight / (maxY - minY);
-              var offsetX = (canvasWidth - (maxX + minX) * scaleX) / 2;
-              var offsetY = (canvasHeight - (maxY + minY) * scaleY) / 2;
-            
-              // Draw a big circle around (minX, minY) and (maxX, maxY)
-              ctx.beginPath();
-              ctx.arc((minX - minX) * scaleX, (minY - minY) * scaleY, 10, 0, 2 * Math.PI);
-              ctx.arc((maxX - minX) * scaleX, (maxY - minY) * scaleY, 10, 0, 2 * Math.PI);
-              ctx.fill();
-            //   ctx.stroke();
-
-              // Draw vertices
-              ctx.fillStyle = 'green';
-              vertices.forEach(vertex => {
-                  ctx.beginPath();
-                  var x = (vertex.x - minX) * scaleX + offsetX;
-                  var y = (vertex.y - minY) * scaleY + offsetY;
-                  ctx.arc(x, y, 5, 0, 2 * Math.PI);
-                  ctx.fill();
-              });
-      
-              // Draw edges, use gradient color to denot different edges
-              ctx.strokeStyle = 'blue';
-              edges.forEach(edge => {
-                  ctx.beginPath();
-                  var startX = (edge.start.x - minX) * scaleX * 1 + offsetX;
-                  var startY = (edge.start.y - minY) * scaleY * 1 + offsetY;
-                  var endX = (edge.end.x - minX) * scaleX * 1 + offsetX;
-                  var endY = (edge.end.y - minY) * scaleY * 1 + offsetY;
-                  ctx.moveTo(startX, startY);
-                  ctx.lineTo(endX, endY);
-                  ctx.stroke();
-              });
-          }).catch(error => {
-              console.error('Error fetching data:', error);
-          });
-      </script>
+    <body>
+        <form id="genForm">
+            <input type="number" id="genInput" name="generation" placeholder="Enter the generation (integer)">
+            <button type="submit">Submit</button>
+        </form>
+        <canvas id="myCanvas"></canvas>
+    </body>
 </body>
 </html>

@@ -6,10 +6,11 @@ authors = ["Rosetta-Tan <rosetta_tan@outlook.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ldpc
-bposd
-networkx
+cython = "^3.0"
+ldpc = "^0.1"
+bposd = "^1.6"
+networkx = "^3.1"
 
 [tool.poetry.extras]
 web = ["flask", "flask_cors"]
-graphics = ["matplotlib, pycairo"]
+graphics = ["matplotlib", "pycairo"]

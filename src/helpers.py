@@ -1,11 +1,18 @@
-from typing import List, Tuple, TypeAlias  # TypeAlias requires Python 3.10
+from typing import List, Tuple, Literal, TypeAlias  # TypeAlias requires Python 3.10
 import struct
 import numpy as np
 from matplotlib import pyplot as plt
-Trig: TypeAlias = Tuple[int, complex, complex, complex]
+from dataclasses import dataclass
+Face: TypeAlias = Tuple[int, complex, complex, complex]
 Edge: TypeAlias = Tuple[complex, complex]
 
 ##### Functions for the tiling units #####
+@dataclass
+class Triangle:
+    nop: int
+    pairing: Literal['domino', 'kite', None]
+    
+
 class GeometryUtils:
     '''
     Class with static methods for geometric operations
@@ -23,16 +30,16 @@ class GeometryUtils:
         return GeometryUtils.same_vtx(edge1[0], edge2[0]) and GeometryUtils.same_vtx(edge1[1], edge2[1]) or GeometryUtils.same_vtx(edge1[0], edge2[1]) and GeometryUtils.same_vtx(edge1[1], edge2[0])
     
     @staticmethod
-    def get_trig_center(trig: Trig) -> complex:
+    def get_trig_center(trig: Face) -> complex:
         return (trig[1]+trig[2]+trig[3])/3
     
     @staticmethod
-    def get_trig_edges(trig: Trig) -> List[Edge]:
+    def get_trig_edges(trig: Face) -> List[Edge]:
         return [(trig[1], trig[2]), (trig[2], trig[3]), (trig[3], trig[1])]
     
     @staticmethod
-    def subdivide(triangles: List[Trig]) -> List[Trig]:
-        result: List[Trig] = []
+    def subdivide(triangles: List[Face]) -> List[Face]:
+        result: List[Face] = []
         for ctg, A, B, C in triangles:
             if ctg == 0:
                 P1 = A + 2/5*(B-A)
@@ -52,7 +59,7 @@ class GeometryUtils:
 
 class Tiling:
     @staticmethod
-    def uniq_vertices(faces: List[Trig]) -> List[complex]:
+    def uniq_vertices(faces: List[Face]) -> List[complex]:
         '''function to get all the unique vertices of the list of faces'''
         vtxs: List[complex] = []
         for face in faces:
@@ -62,7 +69,7 @@ class Tiling:
         return vtxs
     
     @staticmethod
-    def uniq_edges(faces: List[Trig]) -> List[Edge]:
+    def uniq_edges(faces: List[Face]) -> List[Edge]:
         '''function to get all the unique edges of the list of faces'''
         edges: List[Edge] = []
         for face in faces:
@@ -73,7 +80,7 @@ class Tiling:
         return edges
 
     @staticmethod
-    def draw(faces: List[Trig], vertices: List[complex]):
+    def draw(faces: List[Face], vertices: List[complex]):
         vertices_pos = np.array([[vertex.real, vertex.imag] for vertex in vertices])
         edges = Tiling.get_edges(faces, vertices)
         fig, ax = plt.subplots()
