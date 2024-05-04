@@ -1,3 +1,4 @@
+import * as helpers from './helpers.js';
 let canvas = document.getElementById('myCanvas');
 let ctx = canvas.getContext('2d');
 let style = canvas.currentStyle || window.getComputedStyle(canvas);
@@ -12,102 +13,40 @@ let numericMarginBottom = parseInt(marginBottom, 10);
 [canvas.width, canvas.height] = [CANVAS_WIDTH, CANVAS_HEIGHT];
 
 // Add a form to let user input an integer number
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('genForm')
-    form.action = '/data/';  // Set to AJAX submission URL
-    form.method = 'POST';
-    form.addEventListener('submit', handleSubmit);
-});
+const form = document.getElementById('genForm');
+const input = document.getElementById('genInput');
 
-function handleSubmit(event) {
-    event.preventDefault(); // Prevent default form submission
-    const number = document.getElementById('genInput').value;
-
-    fetch('/data/', {  // Sending data to Flask
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ gen: number })  // Send number as JSON
-    })
-    .then(response => {
-        if (response.ok) {
-            return response.json();
-        } else {
-            throw new Error('Server response was not ok.');
-        }
-    })
-    .then(data => {
-        console.log('Success:', data);
-        drawData(data);  // Redraw the canvas with new data
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-        alert("Failed to fetch data: " + error.message);
-    });
+function draw() {
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.beginPath();
+    ctx.strokeStyle = 'black';
+    ctx.moveTo(0, CANVAS_HEIGHT);
+    ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.lineTo(CANVAS_WIDTH, 0);
+    ctx.lineTo(0, CANVAS_HEIGHT);
+    ctx.closePath();
+    ctx.stroke();
 }
 
-async function fetchData(gen = 0) {  // Default generation parameter set to 0
-    let options = {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ gen: gen })
-    };
-
-    const response = await fetch('/data/', options);
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    let num = parseInt(input.value, 10);
+    if (isNaN(num)) {
+        alert('Please enter a valid integer number');
+        return;
     }
-    return response.json();
-}
-
-function drawData(data) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    var vertices = data.vertices;
-    var edges = data.edges;
-    // Calculate bounds
-    var minX = Math.min(...vertices.map(v => v.x));
-    var maxX = Math.max(...vertices.map(v => v.x));
-    var minY = Math.min(...vertices.map(v => v.y));
-    var maxY = Math.max(...vertices.map(v => v.y));
-    // Calculate scale and offset
-    var scaleX = CANVAS_WIDTH / (maxX - minX);
-    var scaleY = CANVAS_HEIGHT / (maxY - minY);
-    var offsetX = (CANVAS_WIDTH - (maxX + minX) * scaleX) / 2;
-    var offsetY = (CANVAS_HEIGHT - (maxY + minY) * scaleY) / 2;
+    let trigs = [new helpers.Trig(new helpers.Vtx(0, 0), new helpers.Vtx(2, 1), new helpers.Vtx(2, 0))];
     
-    // Draw vertices
-    ctx.fillStyle = 'green';
-    vertices.forEach(vertex => {
-        ctx.beginPath();
-        var x = (vertex.x - minX) * scaleX + offsetX;
-        var y = (vertex.y - minY) * scaleY + offsetY;
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fill();
-    });
-    // Draw edges, use gradient color to denot different edges
-    ctx.strokeStyle = 'blue';
-    edges.forEach(edge => {
-        ctx.beginPath();
-        var startX = (edge.start.x - minX) * scaleX * 1 + offsetX;
-        var startY = (edge.start.y - minY) * scaleY * 1 + offsetY;
-        var endX = (edge.end.x - minX) * scaleX * 1 + offsetX;
-        var endY = (edge.end.y - minY) * scaleY * 1 + offsetY;
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-    });
+    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.beginPath();
+    ctx.strokeStyle = 'black';
+    ctx.moveTo(0, CANVAS_HEIGHT/2);
+    ctx.lineTo(CANVAS_WIDTH/2, CANVAS_HEIGHT/2);
+    ctx.lineTo(CANVAS_WIDTH/2, 0);
+    ctx.lineTo(0, CANVAS_HEIGHT/2);
+    ctx.closePath();
+    ctx.stroke();
 }
+);
 
-function main() {
-    fetchData(0).
-    then(data => {
-        drawData(data);
-    })
-    .catch(error => {
-        console.error('Error during initial fetch:', error);
-    });
-}
-
-window.onload = main;
+window.onload = draw;
