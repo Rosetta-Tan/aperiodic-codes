@@ -1,20 +1,37 @@
 import * as helpers from './helpers.js';
-let canvas = document.getElementById('myCanvas');
-const ctx = canvas.getContext('2d');
-let style = canvas.currentStyle || window.getComputedStyle(canvas);
-let width = style.width;
-let height = style.height;
-let marginTop = style.marginTop;
-let marginBottom = style.marginBottom;
-let CANVAS_WIDTH = parseInt(width, 10); // Parse numeric values from the properties
-let CANVAS_HEIGHT = parseInt(height, 10);
-let numericMarginTop = parseInt(marginTop, 10);
-let numericMarginBottom = parseInt(marginBottom, 10);
-[canvas.width, canvas.height] = [CANVAS_WIDTH, CANVAS_HEIGHT];
-
-// Add a form to let user input an integer number
 const form = document.getElementById('genForm');
 const input = document.getElementById('genInput');
+
+function getMyCanvas() {
+    let canvas = document.getElementById('myCanvas');
+    let style = canvas.currentStyle || window.getComputedStyle(canvas);
+    let width = style.width;
+    let height = style.height;
+    let marginTop = style.marginTop;
+    let marginBottom = style.marginBottom;
+    let CANVAS_WIDTH = parseInt(width, 10); // Parse numeric values from the properties
+    let CANVAS_HEIGHT = parseInt(height, 10);
+    let numericMarginTop = parseInt(marginTop, 10);
+    let numericMarginBottom = parseInt(marginBottom, 10);
+    [canvas.width, canvas.height] = [CANVAS_WIDTH, CANVAS_HEIGHT];
+    return canvas;
+}
+
+function getCheckCanvas() {
+    let canvas = document.getElementById('checkCanvas');
+    let style = canvas.currentStyle || window.getComputedStyle(canvas);
+    let width = style.width;
+    let height = style.height;
+    let marginTop = style.marginTop;
+    let marginBottom = style.marginBottom;
+    let CANVAS_WIDTH = parseInt(width, 10); // Parse numeric values from the properties
+    let CANVAS_HEIGHT = parseInt(height, 10);
+    let numericMarginTop = parseInt(marginTop, 10);
+    let numericMarginBottom = parseInt(marginBottom, 10);
+    [canvas.width, canvas.height] = [CANVAS_WIDTH, CANVAS_HEIGHT];
+    return canvas;
+}
+
 
 function draw_default() {
     let v1 = new helpers.Vtx(0, 0);
@@ -22,10 +39,12 @@ function draw_default() {
     let v3 = new helpers.Vtx(2, 0);
     let trigs = [new helpers.Trig(v1, v2, v3)];
     let edges = helpers.Tiling.uniqEdges(trigs);
-    draw(edges, [v1, v2, v3]);
+    draw(edges, [v1, v2, v3], getMyCanvas());
+    draw(edges, [v1, v2, v3], getCheckCanvas());
 }
 
-function draw(edges, vertices) {
+function draw(edges, vertices, canvas) {
+    let ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     // Calculate edges
     console.log(edges);
@@ -44,8 +63,8 @@ function draw(edges, vertices) {
     }
     console.log(minX, maxX, minY, maxY);
     // Calculate scale and offset
-    var scaleX = CANVAS_WIDTH / (maxX - minX);
-    var scaleY = CANVAS_HEIGHT / (maxY - minY);
+    var scaleX = canvas.width / (maxX - minX);
+    var scaleY = canvas.height / (maxY - minY);
     
     // Draw vertices
     ctx.fillStyle = 'green';
@@ -87,7 +106,8 @@ form.addEventListener('submit', function(event) {
     console.log(trigs);
     let edges = helpers.Tiling.uniqEdges(trigs);
     let vertices = helpers.Tiling.uniqVtxs(trigs);
-    draw(edges, vertices);
+    draw(edges, vertices, getMyCanvas());
+    draw(edges, vertices, getCheckCanvas());
 }
 );
 
