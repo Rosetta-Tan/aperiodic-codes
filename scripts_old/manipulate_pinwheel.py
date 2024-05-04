@@ -13,7 +13,7 @@ readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My 
 readdir = os.path.join(readdir, 'antiparity=True_gen=6')
 savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/pinwheel/laplacian/'
 # savedir = os.path.join(savedir, f'antiparity={ANTIPARITY}_gen={gen}_wing={wing_percentile}')
-savedir = os.path.join(savedir, 'antiparity=True_gen=6')
+savedir = os.path.join(savedir, 'antiparity=True_gen=4')
 if not os.path.exists(savedir):
     os.makedirs(savedir)
 

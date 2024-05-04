@@ -80,12 +80,11 @@ class Tiling:
         return edges
 
     @staticmethod
-    def draw(faces: List[Face], vertices: List[complex]):
+    def draw(faces: List[Face], vertices: List[complex], ax, show: bool = False):
         vertices_pos = np.array([[vertex.real, vertex.imag] for vertex in vertices])
-        edges = Tiling.get_edges(faces, vertices)
-        fig, ax = plt.subplots()
+        edges = Tiling.uniq_edges(faces)
         ax.scatter(np.array(vertices_pos)[:,0], np.array(vertices_pos)[:,1], marker='o', c='b')
-        edges = Tiling.get_edges(faces, vertices)
+        edges = Tiling.uniq_edges(faces)
         for edge in edges:
             ax.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], color='k', linewidth=0.5)
     
@@ -93,4 +92,5 @@ class Tiling:
         ax.set_xticks([])
         ax.set_yticks([])
 
-        return fig, ax
+        if show:
+            plt.show()

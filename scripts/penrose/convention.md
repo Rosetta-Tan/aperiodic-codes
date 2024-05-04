@@ -1,0 +1,1 @@
+* local environment for Penrose tiling: [](https://www.researchgate.net/profile/Anuradha-Jagannathan/publication/1899493/figure/fig9/AS:668342029402129@1536356565897/Local-environments-in-the-Penrose-tiling.png)
