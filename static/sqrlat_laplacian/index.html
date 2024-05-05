@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Aperiodic Codes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="index.js"></script>
+</head>
+<body>
+    <div class="centered-content">
+        <h1>Square Lattice Laplacian Codes</h1>
+        <form id="genForm">
+            <input type="number" id="genInput" name="generation" placeholder="generation (integer)">
+            <button type="submit">Submit</button>
+        </form>
+        <div class="canvas-container">
+            <canvas id="bitCanvas" width="500" height="500" style="z-index: 1;"></canvas>
+            <canvas id="checkCanvas" width="500" height="500" style="z-index: 0;"></canvas>
+        </div>
+        <button id="resetButton">Reset</button>
+    </div>
+</body>
+</html>

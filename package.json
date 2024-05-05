@@ -6,8 +6,8 @@
     "license": "MIT",
     "scripts": {
       "dev": "node ./bin/cli.js",
-      "start": "rm -rf dist && parcel static/pinwheel/index.html --no-cache -p 1234 --open",
-      "build": "rm -rf dist && parcel static/pinwheel/index.html --no-source-maps --no-cache --public-url /aperiodic-codes",
+      "start": "rm -rf dist && parcel static/sqrlat_laplacian/index.html --no-cache -p 1234 --open",
+      "build": "rm -rf dist && parcel static/sqrlat_laplacian/index.html --no-source-maps --no-cache --public-url /aperiodic-codes",
       "deploy": "gh-pages -d dist"
     },
     "keywords": [
