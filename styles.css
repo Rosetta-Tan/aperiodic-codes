@@ -1,0 +1,12 @@
+/* Add some margin below the form to create space */
+form {
+    margin-bottom: 20px;
+}
+
+/* Center the content vertically and horizontally */
+.centered-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
