@@ -280,9 +280,6 @@ dist
 # TernJS port file
 .tern-port
 
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
 # yarn v2
 .yarn/cache
 .yarn/unplugged
@@ -293,6 +290,10 @@ dist
 # MacOS
 .DS_Store
 
-data/
+# VSCode
+.vscode
+.vscode-test
 
+# personal
+data/
 sbatch_scripts/
