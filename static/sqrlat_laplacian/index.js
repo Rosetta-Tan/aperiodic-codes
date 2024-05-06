@@ -124,6 +124,9 @@ form.addEventListener('submit', function(event) {
     if (isNaN(gen)) {
         alert('Please enter a valid integer number');
         return;
+    } else if (gen > 5) {
+        alert('Please enter a number less than or equal to 5');
+        return;
     }
     let faces = [new helpers.Face(initVtxs[0], initVtxs[1], initVtxs[2], initVtxs[3])];
     for (let i = 0; i < gen; i++) {
