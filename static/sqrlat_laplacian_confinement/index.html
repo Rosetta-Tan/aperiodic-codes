@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Aperiodic Codes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="index.js"></script>
+</head>
+<body>
+    <div class="centered-content">
+        <h1>Square Lattice Laplacian Codes (Confinement Test)</h1>
+        <form id="genForm">
+            <input type="number" id="genInput" name="generation" placeholder="generation (integer)">
+            <button type="submit">Submit</button>
+        </form>
+        <div class="side-by-side-content">
+            <button id="chooseChecks">Choose checks</button>
+            <button id="chooseBits">Choose bits</button>
+        </div>
+        <div class="side-by-side-content">
+            <div class="canvas-container">
+                <canvas id="bitCanvas" width="500" height="500" style="z-index: 0;"></canvas>
+                <canvas id="checkCanvas" width="500" height="500" style="z-index: 1;"></canvas>
+            </div>
+            <div class="canvas-container">
+                <canvas id="bitCanvasNxt" width="500" height="500" style="z-index: 0;"></canvas>
+                <canvas id="checkCanvasNxt" width="500" height="500" style="z-index: 1;"></canvas>
+            </div>
+        </div>
+        <button id="resetButton">Reset</button>
+    </div>
+</body>
+</html>
