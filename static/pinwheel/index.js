@@ -78,6 +78,7 @@ function draw(edges, vertices, canvas) {
 
     // Draw edges
     ctx.strokeStyle = 'blue';
+    ctx.globalAlpha = 0.2;
     for (let i = 0; i < edges.length; i++) {
         let edge = edges[i];
         ctx.beginPath();

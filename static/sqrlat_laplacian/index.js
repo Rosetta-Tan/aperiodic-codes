@@ -90,6 +90,7 @@ function draw(edges, vertices, stateVec, canvas, type = 'bit') {
     
     // Draw edges
     ctx.strokeStyle = 'black';
+    ctx.globalAlpha = 0.2;
     for (let i = 0; i < edges.length; i++) {
         let edge = edges[i];
         ctx.beginPath();

@@ -5,12 +5,26 @@ const PADDING = 20,
     reset = document.getElementById('resetButton'),
     chooseChecks = document.getElementById('chooseChecks'),
     chooseBits = document.getElementById('chooseBits'),
-    initVtxs = [new helpers.Vtx(0, 0), new helpers.Vtx(1, 0), new helpers.Vtx(1, 1), new helpers.Vtx(0, 1)],
     bitCanvas = setCanvasStyle(document.getElementById('bitCanvas')),
     checkCanvas = setCanvasStyle(document.getElementById('checkCanvas')),
     bitCanvasNxt = setCanvasStyle(document.getElementById('bitCanvasNxt')),
     checkCanvasNxt = setCanvasStyle(document.getElementById('checkCanvasNxt'));
 
+const initFaces = [];
+for (let i = 0; i < 10; i++) {
+    const angleB = (2 * i - 1) * Math.PI / 10;
+    const angleC = (2 * i + 1) * Math.PI / 10;
+    let B = new helpers.Vtx(Math.cos(angleB), Math.sin(angleB));
+    let C = new helpers.Vtx(Math.cos(angleC), Math.sin(angleC));
+    if (i % 2 === 0) {
+        let tmp = B;
+        B = C;
+        C = tmp;
+    }
+    initFaces.push(new helpers.Face(1, new helpers.Vtx(0, 0), B, C));
+}
+const initVtxs = helpers.Tiling.uniqVtxs(initFaces);
+const initEdges = helpers.Tiling.uniqEdges(initFaces);
 
 function setCanvasStyle(canvas) {
     let style = window.getComputedStyle(canvas);
@@ -41,13 +55,14 @@ function removeEventListeners() {
 }
 
 function drawDefault() {
-    let initFace = new helpers.Face(initVtxs[0], initVtxs[1], initVtxs[2], initVtxs[3]);
-    let initEdges = helpers.GeometryUtils.getFaceEdges(initFace);
     let stateVec = Array(initVtxs.length).fill(0);
     draw(initEdges, initVtxs, stateVec, [], bitCanvas);
     draw(initEdges, initVtxs, stateVec, [], checkCanvas, 'check');
-    draw(initEdges, initVtxs, stateVec, [], bitCanvasNxt);
-    draw(initEdges, initVtxs, stateVec, [], checkCanvasNxt, 'check');
+    let facesNxt = helpers.GeometryUtils.subdivide(initFaces);
+    let [edgesNxt, verticesNxt, parityCheckNxt, bitVectorNxt, checkVectorNxt, hlgtBitIndsNxt, hlgtCheckIndsNxt] = initData(facesNxt);
+    stateVec = Array(verticesNxt.length).fill(0);
+    draw(edgesNxt, verticesNxt, stateVec, [], bitCanvasNxt);
+    draw(edgesNxt, verticesNxt, stateVec, [], checkCanvasNxt, 'check');
 }
 
 function draw(edges, vertices, stateVec, hlgtInds, canvas, type = 'bit') {
@@ -135,85 +150,51 @@ function nearestVtxIdx(vertices, x, y) {
     return minIdx;
 }
 
-function initData(faces, thisBitCanvas, thisCheckCanvas) {
+function initData(faces) {
     let edges = helpers.Tiling.uniqEdges(faces);
     let vertices = helpers.Tiling.uniqVtxs(faces);
     let parityCheck = helpers.Tiling.parityCheck(edges, vertices);
     let bitVector = Array(vertices.length).fill(0);
     let checkVector = Array(vertices.length).fill(0);
-    let hlgtBits = [];
-    let hlgtChecks = [];
-    return [edges, vertices, parityCheck, bitVector, checkVector, hlgtBits, hlgtChecks];
+    let hlgtBitInds = [];
+    let hlgtCheckInds = [];
+    return [edges, vertices, parityCheck, bitVector, checkVector, hlgtBitInds, hlgtCheckInds];
 }
 
-function updateHlgtChecksNxt(verticesNxt, hlghtVtx, hlgtChecksNxt) {
-    let idx = verticesNxt.indexOf(hlghtVtx);
-    let [x, y] = [verticesNxt[idx].x, verticesNxt[idx].y];
-    // find the current vertex
-    if (!hlgtChecksNxt.includes(idx)) {
-        hlgtChecksNxt.push(idx);
-    } else {
-        hlgtChecksNxt = hlgtChecksNxt.filter((v) => v !== idx);
-    }
-    // find the upper neighbor
-    let upperNbrY = Number.MAX_VALUE;
-    let upperNbrIdx = -1;
-    for (let i = 0; i < verticesNxt.length; i++) {
-        if (verticesNxt[i].x == x && verticesNxt[i].y > y) {
-            if (verticesNxt[i].y < upperNbrY) {
-                upperNbrY = verticesNxt[i].y;
-                upperNbrIdx = i;
-            }
-        }
-    }
-    if (upperNbrIdx !== -1) {
-        if (!hlgtChecksNxt.includes(upperNbrIdx)) {
-            hlgtChecksNxt.push(upperNbrIdx);
-        } else {
-            hlgtChecksNxt = hlgtChecksNxt.filter((v) => v !== upperNbrIdx);
-        }
-    }
-    // find the right neighbor
-    let rightNbrX = Number.MAX_VALUE;
-    let rightNbrIdx = -1;
-    for (let i = 0; i < verticesNxt.length; i++) {
-        if (verticesNxt[i].y == y && verticesNxt[i].x > x) {
-            if (verticesNxt[i].x < rightNbrX) {
-                rightNbrX = verticesNxt[i].x;
-                rightNbrIdx = i;
-            }
-        }
-    }
-    if (rightNbrIdx !== -1) {
-        if (!hlgtChecksNxt.includes(rightNbrIdx)) {
-            hlgtChecksNxt.push(rightNbrIdx);
-        } else {
-            hlgtChecksNxt = hlgtChecksNxt.filter((v) => v !== rightNbrIdx);
-        }
-    }
-    // find the upper-right neighbor
-    if (upperNbrIdx != -1 && rightNbrIdx != -1) {
-        for (let i = 0; i < verticesNxt.length; i++) {
-            if (verticesNxt[i].x == rightNbrX && verticesNxt[i].y == upperNbrY) {
-                if (!hlgtChecksNxt.includes(i)) {
-                    hlgtChecksNxt.push(i);
-                } else {
-                    hlgtChecksNxt = hlgtChecksNxt.filter((v) => v !== i);
+function updatehlgtCheckIndsNxt(faces, hlghtVtxs) {
+    let hlgtVtxsNxt = [];
+    let hlgtVtxInds2faceIndsMap = {};
+    for (let faceInd = 0; faceInd < faces.length; faceInd++) {
+        let face = faces[faceInd];
+        let faceVtxs = [face.v1, face.v2, face.v3];
+        for (let j = 0; j < hlghtVtxs.length; j++) { // for each highlighted vertex
+            if (hlgtVtxInds2faceIndsMap[j] === undefined) {
+                hlgtVtxInds2faceIndsMap[j] = [];
+                for (let k = 0; k < faceVtxs.length; k++) {
+                    if (helpers.GeometryUtils.sameVtx(hlghtVtxs[j], faceVtxs[k])) {
+                        hlgtVtxInds2faceIndsMap[j].push(faceInd);
+                        break;
+                    }
                 }
             }
+            // if the highlighted vertex is in the face, add the vertex following a rule to hlgtVtxsNxt
+            if (hlgtVtxInds2faceIndsMap[j] == faceInd) {
+                let ctg = faces[faceInd].ctg;
+                // TODO
+            }
         }
+
     }
-    return hlgtChecksNxt;
 }
 
-function updateHlgtBitsNxt(verticesNxt, hlghtVtx, hlgtBitsNxt) {
+function updatehlgtBitIndsNxt(verticesNxt, hlghtVtx, hlgtBitIndsNxt) {
     let idx = verticesNxt.indexOf(hlghtVtx);
-    if (!hlgtBitsNxt.includes(idx)) {
-        hlgtBitsNxt.push(idx);
+    if (!hlgtBitIndsNxt.includes(idx)) {
+        hlgtBitIndsNxt.push(idx);
     } else {
-        hlgtBitsNxt = hlgtBitsNxt.filter((v) => v !== idx);
+        hlgtBitIndsNxt = hlgtBitIndsNxt.filter((v) => v !== idx);
     }
-    return hlgtBitsNxt;
+    return hlgtBitIndsNxt;
 }
 
 form.addEventListener('submit', function(event) {
@@ -227,24 +208,24 @@ form.addEventListener('submit', function(event) {
         alert('Please enter a number less than or equal to 4');
         return;
     }
-    let faces = [new helpers.Face(initVtxs[0], initVtxs[1], initVtxs[2], initVtxs[3])];
+    let faces = initFaces;
     for (let i = 0; i < gen; i++) {
         faces = helpers.GeometryUtils.subdivide(faces);
     }
     let facesNxt = helpers.GeometryUtils.subdivide(faces);
 
     // initialize data for display and calculation for this generation
-    let [edges, vertices, parityCheck, bitVector, checkVector, hlgtBits, hlgtChecks] = initData(faces);
+    let [edges, vertices, parityCheck, bitVector, checkVector, hlgtBitInds, hlgtCheckInds] = initData(faces);
     draw(edges, vertices, bitVector, [], bitCanvas);
     draw(edges, vertices, checkVector, [] ,checkCanvas, 'check');
-    let [edgesNxt, verticesNxt, parityCheckNxt, bitVectorNxt, checkVectorNxt, hlgtBitsNxt, hlgtChecksNxt] = initData(facesNxt, bitCanvasNxt, checkCanvasNxt);
+    let [edgesNxt, verticesNxt, parityCheckNxt, bitVectorNxt, checkVectorNxt, hlgtBitIndsNxt, hlgtCheckIndsNxt] = initData(facesNxt);
     draw(edgesNxt, verticesNxt, bitVectorNxt, [], bitCanvasNxt);
     draw(edgesNxt, verticesNxt, checkVectorNxt, [], checkCanvasNxt, 'check');
 
     // add event listeners
     let currentCanvas = null;
 
-    chooseChecks.onclick = () => {
+    chooseChecks.onclick = (currentCanvas) => {
         removeEventListeners();
         currentCanvas = 'checkCanvas';
         checkCanvas.style.zIndex = 1;
@@ -255,19 +236,23 @@ form.addEventListener('submit', function(event) {
             let [minX, minY, scaleX, scaleY] = getCanvasScale(checkCanvas, vertices);
             x = (x - PADDING) / scaleX + minX;
             y = (y - PADDING) / scaleY + minY;
-            let idx = nearestVtxIdx(vertices, x, y);
-            if (!hlgtChecks.includes(idx)) {
-                hlgtChecks.push(idx);
+            let idx = nearestVtxIdx(vertices, x, y);            
+            if (!hlgtCheckInds.includes(idx)) {
+                hlgtCheckInds.push(idx);
             } else {
-                hlgtChecks = hlgtChecks.filter((v) => v !== idx);
+                hlgtCheckInds = hlgtCheckInds.filter((v) => v !== idx);
             }
-            hlgtChecksNxt = updateHlgtChecksNxt(verticesNxt, vertices[idx], hlgtChecksNxt);
-            draw(edges, vertices, checkVector, hlgtChecks, checkCanvas, 'check');
-            draw(edgesNxt, verticesNxt, checkVectorNxt, hlgtChecksNxt, checkCanvasNxt, 'check');
+            draw(edges, vertices, checkVector, hlgtCheckInds, checkCanvas, 'check');
+            let hlgtChecks = [];
+            for (let i = 0; i < hlgtCheckInds.length; i++) {
+                hlgtChecks.push(vertices[hlgtCheckInds[i]]);
+            }
+            hlgtCheckIndsNxt = updatehlgtCheckIndsNxt(verticesNxt, hlgtChecks);
+            draw(edgesNxt, verticesNxt, checkVectorNxt, hlgtCheckIndsNxt, checkCanvasNxt, 'check');
         }
     }
 
-    chooseBits.onclick = () => {
+    chooseBits.onclick = (currentCanvas) => {
         removeEventListeners();
         currentCanvas = 'bitCanvas';
         checkCanvas.style.zIndex = 0;
@@ -279,14 +264,14 @@ form.addEventListener('submit', function(event) {
             x = (x - PADDING) / scaleX + minX;
             y = (y - PADDING) / scaleY + minY;
             let idx = nearestVtxIdx(vertices, x, y);
-            if (!hlgtBits.includes(idx)) {
-                hlgtBits.push(idx);
+            if (!hlgtBitInds.includes(idx)) {
+                hlgtBitInds.push(idx);
             } else {
-                hlgtBits = hlgtBits.filter((v) => v !== idx);
+                hlgtBitInds = hlgtBitInds.filter((v) => v !== idx);
             }
-            hlgtBitsNxt = updateHlgtBitsNxt(verticesNxt, vertices[idx], hlgtBitsNxt);
-            draw(edges, vertices, bitVector, hlgtBits, bitCanvas);
-            draw(edgesNxt, verticesNxt, bitVectorNxt, hlgtBitsNxt, bitCanvasNxt);
+            draw(edges, vertices, bitVector, hlgtBitInds, bitCanvas);
+            // hlgtBitIndsNxt = updatehlgtBitIndsNxt(verticesNxt, vertices[idx], hlgtBitIndsNxt);
+            // draw(edgesNxt, verticesNxt, bitVectorNxt, hlgtBitIndsNxt, bitCanvasNxt);
         }
     }
 
@@ -303,6 +288,6 @@ form.addEventListener('submit', function(event) {
 );
 
 window.onload = () => {
-    drawDefault();
     removeEventListeners();
+    drawDefault();
 }
