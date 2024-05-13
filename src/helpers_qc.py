@@ -204,7 +204,7 @@ def draw_qc_code_logical(faces, vertices, edges, faces_pos, h, logical_op):
     ones = [i for i in range(len(logical_op)) if logical_op[i] == 1]
     x = [vertices_pos[i][0] for i in ones]
     y = [vertices_pos[i][1] for i in ones]
-    ax.scatter(x, y, marker='s', c='g', zorder=100)
+    ax.scatter(x, y, marker='o', c='g', zorder=100)
 
     ax.set_aspect('equal')
     ax.set_xticks([])
@@ -252,5 +252,24 @@ def draw_qc_transposecode_logical(faces, vertices, edges, faces_pos, h, logical_
 
     return fig, ax
             
-        
+def draw_laplacian_code_logical(faces, vertices, edges, faces_pos, h, logical_op):
+    vertices = get_vertices(faces)
+    vertices_pos = [np.array([vertex.real, vertex.imag]) for vertex in vertices]
     
+    fig, ax = plt.subplots()
+    ax.scatter(np.array(vertices_pos)[:,0], np.array(vertices_pos)[:,1], marker='s', s=80, c='r', alpha=0.2)
+    ax.scatter(np.array(vertices_pos)[:,0], np.array(vertices_pos)[:,1], marker='o', c='b', alpha=0.2)
+
+    for edge in edges:
+        ax.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], color='k', linewidth=0.5)
+
+    ones = [i for i in range(len(logical_op)) if logical_op[i] == 1]
+    x = [vertices_pos[i][0] for i in ones]
+    y = [vertices_pos[i][1] for i in ones]
+    ax.scatter(x, y, marker='o', c='g', zorder=100)
+    
+    ax.set_aspect('equal')
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    return fig, ax
