@@ -49,13 +49,6 @@ function getCanvasScale(canvas, vertices) {
     return [minX, minY, scaleX, scaleY];
 }
 
-function removeEventListeners() {
-    checkCanvas.onclick = null;
-    bitCanvas.onclick = null;
-    chooseChecks.onclick = null;
-    chooseBits.onclick = null;
-}
-
 const config = {
     "current": {
         "bit": {
@@ -64,6 +57,7 @@ const config = {
             "edges": initEdges,
             "vertices": initVtxs,
             "hlgtVtxs": [],
+            "ambientBits": new Set(),
             "stateVec": Array(initVtxs.length).fill(0)
         },
         "check": {
@@ -72,6 +66,7 @@ const config = {
             "edges": initEdges,
             "vertices": initVtxs,
             "hlgtVtxs": [],
+            "ambientBits": new Set(),
             "stateVec": Array(initVtxs.length).fill(0)
         }
     },
@@ -82,6 +77,7 @@ const config = {
             "edges": helpers.Tiling.uniqEdges(helpers.GeometryUtils.subdivide(initFaces)),
             "vertices": helpers.Tiling.uniqVtxs(helpers.GeometryUtils.subdivide(initFaces)),
             "hlgtVtxs": [],
+            "ambientBits": new Set(),
             "stateVec": Array(initVtxs.length).fill(0)
         },
         "check": {
@@ -90,6 +86,7 @@ const config = {
             "edges": helpers.Tiling.uniqEdges(helpers.GeometryUtils.subdivide(initFaces)),
             "vertices": helpers.Tiling.uniqVtxs(helpers.GeometryUtils.subdivide(initFaces)),
             "hlgtVtxs": [],
+            "ambientBits": new Set(),
             "stateVec": Array(initVtxs.length).fill(0)
         }
     }
@@ -163,7 +160,7 @@ function draw(obj) {
         }
     }
 
-    // Draw hightlighted vertices
+    // Draw hightlighted checks
     if (obj.hlgtVtxs.length > 0) {
         ctx.globalAlpha = 1;
         ctx.lineWidth = 2;
@@ -184,6 +181,21 @@ function draw(obj) {
                 ctx.rect(x-7.5-1, y-7.5-1, 15+2, 15+2);
                 ctx.stroke();
             }
+        }
+    }
+
+    // Draw ambient bits
+    if (obj.ambientBits.size > 0) {
+        console.log('current canvas:', obj.canvas.id);
+        console.log('ambientBits:', obj.ambientBits);
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 2;
+        for (let vertex of obj.ambientBits) {
+            ctx.beginPath();
+            let x = (vertex.x - minX) * scaleX + PADDING;
+            let y = (vertex.y - minY) * scaleY + PADDING;
+            ctx.arc(x, y, 5+1, 0, 2 * Math.PI);
+            ctx.stroke();
         }
     }
     
@@ -217,39 +229,18 @@ function nearestVtxCoords(vertices, x, y) {
     return [vertices[minIdx].x, vertices[minIdx].y];
 }
 
-function updatehlgtCheckIndsNxt(faces, hlghtVtxs) {
-    let hlgtVtxsNxt = [];
-    let hlgtVtxInds2faceIndsMap = {};
-    for (let faceInd = 0; faceInd < faces.length; faceInd++) {
-        let face = faces[faceInd];
-        let faceVtxs = [face.v1, face.v2, face.v3];
-        for (let j = 0; j < hlghtVtxs.length; j++) { // for each highlighted vertex
-            if (hlgtVtxInds2faceIndsMap[j] === undefined) {
-                hlgtVtxInds2faceIndsMap[j] = [];
-                for (let k = 0; k < faceVtxs.length; k++) {
-                    if (helpers.GeometryUtils.sameVtx(hlghtVtxs[j], faceVtxs[k])) {
-                        hlgtVtxInds2faceIndsMap[j].push(faceInd);
-                        break;
-                    }
-                }
-            }
-            // if the highlighted vertex is in the face, add the vertex following a rule to hlgtVtxsNxt
-            if (hlgtVtxInds2faceIndsMap[j] == faceInd) {
-                let ctg = faces[faceInd].ctg;
-                // TODO
-            }
-        }
-
-    }
-}
-
+/*
+    * Handle the form submission
+    * @return {void}
+    * @effect: initialize the faces, edges, vertices, hlgtVtxs, and stateVec of the current and next canvases
+*/
 function handleFormSubmit() {
     let gen = parseInt(input.value, 10);
     if (isNaN(gen)) {
         alert('Please enter a valid integer number');
         return;
-    } else if (gen > 4) {
-        alert('Please enter a number less than or equal to 4');
+    } else if (gen > 5) {
+        alert('Please enter a number less than or equal to 5');
         return;
     }
     let faces = initFaces;
@@ -277,7 +268,6 @@ function handleFormSubmit() {
 }
 
 function handleChooseSubmit() {
-    // removeEventListeners();
     console.log('type chosen:', document.activeElement.id);
     let id = document.activeElement.id;
     let type = id.includes("Check") ? "check" : "bit";
@@ -291,54 +281,146 @@ function handleChooseSubmit() {
     console.log(othobj.canvas);
 }
 
-function setHlgtChecksFromCurrent(x, y) {
+/*
+    * Set the highlighted vertices of the next check canvas based on the highlighted vertices of the current check canvas
+    * @param {number} x - x coordinate of the clicked vertex
+    * @param {number} y - y coordinate of the clicked vertex
+    * @return {void}
+    * @sideEffect: modifies the highlighted vertices of the next check canvas
+    * 
+    * @example
+    * setHlgtChecksFromCurrent(0, 0);
+*/
+function setHlgtChecksFromCurrent() {
     obj = config.current.check;
     objNxt = config.next.check;
-    objNxt.hlgtVtxs = [new helpers.Vtx(x, y)];
-    // look for the vertex in faces
+
+    // look for the vertices in faces
+    let hlgtVtxs = obj.hlgtVtxs;
     let faces = obj.faces;
-    let foundFaceInd = -1;
-    let foundFaceCtg = -1;
-    let foundFaceVtxInd = -1;
-    for (let i = 0; i < faces.length; i++) {
-        let face = faces[i];
-        let faceVtxs = [face.v1, face.v2, face.v3];
-        for (let j = 0; j < faceVtxs.length; j++) {
-            let vtx = faceVtxs[j];
-            if (vtx.x === x && vtx.y === y) {
-                console.log('foundFaceInd:', i);
-                foundFaceInd = i;
-                foundFaceCtg = face.ctg;
-                foundFaceVtxInd = j+1;
-                break;
+    let hlghVtxsNxt = [];
+    for (let hlgtInd = 0; hlgtInd < hlgtVtxs.length; hlgtInd++) {
+        let [x, y] = [hlgtVtxs[hlgtInd].x, hlgtVtxs[hlgtInd].y];
+        hlghVtxsNxt.push(hlgtVtxs[hlgtInd]);
+
+        // for every face, check if the vertex is in the face
+        for (let i = 0; i < faces.length; i++) {
+            let foundCtg = -1;
+            let foundVtxInd = -1;
+
+            let face = faces[i];
+            let faceVtxs = [face.v1, face.v2, face.v3];
+            for (let j = 0; j < faceVtxs.length; j++) {
+                if (faceVtxs[j].x === x && faceVtxs[j].y === y) {
+                    console.log('foundFaceInd:', i);
+                    foundCtg = face.ctg;
+                    foundVtxInd = j + 1;
+                    break;
+                }
+            }
+            // for every face, check if the vertex is in the face
+            if (foundCtg == 1) {
+                if (foundVtxInd == 2) {
+                    let v1 = face.v1;
+                    let v2 = face.v2;
+                    let P = v1.add((v2.add(v1.scale(-1))).scale(1/helpers.goldenRatio));
+                    hlghVtxsNxt.push(P);
+                }
+            } else if (foundCtg == 2) {
+                if (foundVtxInd == 1) {
+                    let v1 = face.v1;
+                    let v2 = face.v2;
+                    let Q = v2.add((v1.add(v2.scale(-1))).scale(1/helpers.goldenRatio));
+                    hlghVtxsNxt.push(Q);
+                } else {
+                    let v2 = face.v2;
+                    let v3 = face.v3;
+                    let R = v2.add((v3.add(v2.scale(-1))).scale(1/helpers.goldenRatio));
+                    hlghVtxsNxt.push(R);
+                }
+            }
+        } 
+    }
+
+    objNxt.hlgtVtxs = hlghVtxsNxt;
+}
+
+function setAmbientBitsFromChecks() {
+    obj = config.current.check;
+    objNxt = config.next.check;
+
+    let ambientBits = new Set();
+    let ambientBitsNxt = new Set();
+
+    // look for the vertices in faces
+    let hlgtVtxs = obj.hlgtVtxs;
+    let faces = obj.faces;
+    for (let hlgtInd = 0; hlgtInd < hlgtVtxs.length; hlgtInd++) {
+        let [x, y] = [hlgtVtxs[hlgtInd].x, hlgtVtxs[hlgtInd].y];
+        ambientBits.add(hlgtVtxs[hlgtInd]);
+
+        // for every face, check if the vertex is in the face
+        for (let i = 0; i < faces.length; i++) {
+            let foundCtg = -1;
+            let foundVtxInd = -1;
+
+            let face = faces[i];
+            let faceVtxs = [face.v1, face.v2, face.v3];
+            for (let j = 0; j < faceVtxs.length; j++) {
+                if (faceVtxs[j].x === x && faceVtxs[j].y === y) {
+                    console.log('foundFaceInd:', i);
+                    foundCtg = face.ctg;
+                    foundVtxInd = j + 1;
+                    break;
+                }
+            }
+            if (foundVtxInd != -1) {
+                for (let j = 0; j < faceVtxs.length; j++) {
+                    if (
+                        (j+1) != foundVtxInd
+                    ) {
+                        ambientBits.add(faceVtxs[j]);
+                    }
+                }
             }
         }
     }
-    if (foundFaceCtg == 1) {
-        if (foundFaceVtxInd != 2) {
-            alert('face ctg is 1, but the vertex is not the second vertex');
-            return;
-        }
-        let v1 = faces[foundFaceInd].v1;
-        let v2 = faces[foundFaceInd].v2;
-        let P = v1.add((v2.add(v1.scale(-1))).scale(1/helpers.goldenRatio));
-        objNxt.hlgtVtxs.push(P);
-    } else {
-        if (foundFaceVtxInd == 2) {
-            alert('face ctg is 2, but the vertex is not the first or third vertex');
-            return;
-        } else {
-            let v2 = faces[foundFaceInd].v2;
-            let v3 = faces[foundFaceInd].v3;
-            if (foundFaceVtxInd == 1) {
-                let Q = v2.add((v3.add(v2.scale(-1))).scale(1/helpers.goldenRatio));
-                objNxt.hlgtVtxs.push(Q);
-            } else {
-                let R = v2.add((v1.add(v2.scale(-1))).scale(1/helpers.goldenRatio));
-                objNxt.hlgtVtxs.push(R);
+
+    // look for the vertices in faces in the next canvas
+    let facesNxt = objNxt.faces;
+    for (let hlgtInd = 0; hlgtInd < hlgtVtxs.length; hlgtInd++) {
+        let [x, y] = [hlgtVtxs[hlgtInd].x, hlgtVtxs[hlgtInd].y];
+        ambientBitsNxt.add(hlgtVtxs[hlgtInd]);
+
+        // for every face, check if the vertex is in the face
+        for (let i = 0; i < facesNxt.length; i++) {
+            let foundCtg = -1;
+            let foundVtxInd = -1;
+
+            let face = facesNxt[i];
+            let faceVtxs = [face.v1, face.v2, face.v3];
+            for (let j = 0; j < faceVtxs.length; j++) {
+                if (faceVtxs[j].x === x && faceVtxs[j].y === y) {
+                    console.log('foundFaceInd:', i);
+                    foundCtg = face.ctg;
+                    foundVtxInd = j + 1;
+                    break;
+                }
+            }
+            if (foundVtxInd != -1) {
+                for (let j = 0; j < faceVtxs.length; j++) {
+                    if (
+                        (j+1) != foundVtxInd
+                    ) {
+                        ambientBitsNxt.add(faceVtxs[j]);
+                    }
+                }
             }
         }
     }
+    
+    config.current.bit.ambientBits = ambientBits;
+    config.next.bit.ambientBits = ambientBitsNxt;
 }
 
 function handleCanvasClick(event, obj) {
@@ -349,28 +431,23 @@ function handleCanvasClick(event, obj) {
     x = (x - PADDING) / scaleX + minX;
     y = (y - PADDING) / scaleY + minY;
     [x, y] = nearestVtxCoords(vertices, x, y);
-    // look for the vertex in hlghtVtxs
-    let hlghtVtxs = obj.hlgtVtxs;
+    // look for the vertex in hlgtVtxs
+    let hlgtVtxs = obj.hlgtVtxs;
+    console.log('type of hlgtVtxs:', Object.prototype.toString.call(hlgtVtxs));
     let foundInd = -1;
-    for (let i = 0; i < hlghtVtxs.length; i++) {
-        if (hlghtVtxs[i].x === x && hlghtVtxs[i].y === y) {
+    for (let i = 0; i < hlgtVtxs.length; i++) {
+        if (hlgtVtxs[i].x === x && hlgtVtxs[i].y === y) {
             foundInd = i;
             break;
         }
     }
     if (foundInd == -1) {  // if the vertex is not already highlighted
-        hlghtVtxs.push(new helpers.Vtx(x, y));
+        hlgtVtxs.push(new helpers.Vtx(x, y));
     } else {
-        hlghtVtxs.splice(foundInd, 1);
+        hlgtVtxs.splice(foundInd, 1);
     }
-    console.log('hlghtVtxs:', hlghtVtxs);
-    obj.hlghtVtxs = hlghtVtxs;
-    draw(obj);
-    
-    if (obj.canvas.id.includes('check')) {
-        setHlgtChecksFromCurrent(x, y);
-        draw(config.next.check);
-    }
+    console.log('hlgtVtxs:', hlgtVtxs);
+    obj.hlgtVtxs = hlgtVtxs;
 }
 
 function resetCanvas(obj) {
@@ -380,7 +457,6 @@ function resetCanvas(obj) {
 }
 
 window.onload = () => {
-    // removeEventListeners();
     drawDefault();
 }
 
@@ -413,9 +489,17 @@ chooseBits.onclick = () => {
 checkCanvas.onclick = (event) => {
     console.log('checkCanvas clicked');
     handleCanvasClick(event, config.current.check);
+    setHlgtChecksFromCurrent();
+    setAmbientBitsFromChecks();
+    draw(config.current.check);
+    draw(config.current.bit);
+    draw(config.next.check);
+    draw(config.next.bit);
 }
 
 bitCanvas.onclick = (event) => {
     console.log('bitCanvas clicked');
     handleCanvasClick(event, config.current.bit);
+    // draw(config.current.bit);
+    // draw(config.next.bit);
 }
