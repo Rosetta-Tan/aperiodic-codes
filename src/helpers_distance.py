@@ -96,6 +96,15 @@ def get_classical_code_distance_time_limit(h, time_limit=10):
     
 
 def get_classical_code_distance_special_treatment(h, target_weight):
+    """_summary_
+
+    Args:
+        h (_type_): _description_
+        target_weight (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     if rank(h) == h.shape[1]:
         print('Code is full rank, no codewords')
         return np.inf
@@ -109,7 +118,7 @@ def get_classical_code_distance_special_treatment(h, target_weight):
         print('len of ker: ', len(ker))
         print('Start finding minimum Hamming weight while buiding codeword space ...')
         start = end
-        # @jit
+        
         def find_min_weight_while_build(matrix):
             span = []
             min_hamming_weight = np.inf

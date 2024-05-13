@@ -101,16 +101,17 @@ def merge(triangle_list):
                     raise Exception('cannot find the other triangle')
     return merged_faces
 
-def get_qc_code(faces, vertices):
-    h = np.zeros((len(faces), len(vertices)))
-    for i, face in enumerate(faces):
-        for j in range(len(vertices)):
-            if len(face) == 4:
-                if close(face[1], vertices[j]) or close(face[2], vertices[j]) or close(face[3], vertices[j]):
-                    h[i,j] = 1
-            elif len(face) == 5:
-                if close(face[1], vertices[j]) or close(face[2], vertices[j]) or close(face[3], vertices[j]) or close(face[4], vertices[j]):
-                    h[i,j] = 1
+def get_laplacian_code(edges, vertices):
+    h = np.zeros((len(vertices), len(vertices)))
+    for icheck, check in enumerate(vertices):
+        for ibit, bit in enumerate(vertices):
+            for edge in edges:
+                if (close(check, edge[0]) and close(bit, edge[1])) or (close(check, edge[1]) and close(bit, edge[0])):
+                    h[icheck, ibit] = 1
+    for i, vertex in enumerate(vertices):
+        h[i, i] = (np.sum(h[i]) % 2)
+    # for i in range(len(vertices)):
+    #     h[i, i] = 1
     return h
 
 ##############################################################################################################
@@ -129,10 +130,8 @@ faces = merge(triangles)
 faces_pos = [np.array([get_geometric_center(face).real, get_geometric_center(face).imag]) for face in faces]
 vertices = get_vertices(faces)
 edges = get_edges(faces, vertices)
-h = get_qc_code(faces, vertices)
+h = get_laplacian_code(edges, vertices)
 # h = h.T
-m, n = h.shape
-print('m, n', m, n)
 logical_basis = row_basis(nullspace(h))
 k = len(logical_basis)
 
@@ -147,7 +146,7 @@ d_bound, logical_op = get_classical_code_distance_special_treatment(h, target_we
 print('d_bound = ', d_bound)
 # fig, ax = draw_qc_transposecode_logical(faces, vertices, edges, h, logical_op)
 # savename = f'transpose_low_weight_logical.pdf'
-fig, ax = draw_qc_code_logical(faces, vertices, edges, faces_pos, h, logical_op)
+fig, ax = draw_laplacian_code_logical(faces, vertices, edges, faces_pos, h, logical_op)
 savename = f'low_weight_logical.pdf'
 ax.set_title(f'low weight logical operator')
 # fig.set_size_inches(12, 12)
