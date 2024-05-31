@@ -1,4 +1,31 @@
 import * as helpers from './helpers.js';
+
+class CanvasManager {
+    constructor(canvasId, padding) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.padding = padding;
+        this.setStyle();
+    }
+
+    setStyle() {
+        let style = window.getComputedStyle(this.canvas);
+        [this.canvas.width, this.canvas.height] = [parseInt(style.width, 10), parseInt(style.height, 10)];
+    }
+
+    clear() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    drawVertex(vertex, options) {
+        // Method to draw a single vertex with given options
+    }
+
+    drawEdges(edges, scale) {
+        // Method to draw all edges
+    }
+}
+
 const PADDING = 20,
     form = document.getElementById('genForm'),
     input = document.getElementById('genInput'),
