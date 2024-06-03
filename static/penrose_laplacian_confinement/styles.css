@@ -1,23 +1,39 @@
 /* Add some margin below the form to create space */
-form {
-    margin-bottom: 20px;
+form
+{
+    margin-bottom: 10px;
+}
+
+button
+{
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 /* Center the content vertically and horizontally */
 .centered-content {
     display: flex;
-    justify-content: center;
-    align-items: center;
     flex-direction: column;
+    justify-content: center;  /* center vertically */
+    align-items: center;  /* center horizontally */
+    
 }
 
+/* To make generation-r and -(r+1) canvas side by side */
 .side-by-side-content {
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center;  /* center horizontally */
+    align-items: center;  /* center vertically */
+    flex-wrap: wrap;  /* wrap the content to next line if it overflows */
 }
 
-/* Add some margin above the canvas to create space */
+/* select the button elements in the side-by-side-content */
+.side-by-side-content button {
+    /* top right bottom left */
+    margin: 0px 10px 30px 10px;  
+}
+
+/* To overlap the bit and check canvases*/
 .canvas-container {
     position: relative;
     top: auto;
@@ -26,9 +42,9 @@ form {
     height: 60vmin;
 }
 
-/* Set the canvas to display as a block element */
+/* box for a single canvas object */
 canvas {
-    position: absolute;
+    position: absolute;  /* position relative to the container */
     top: 0;
     left: 0;
     width: 100%;
