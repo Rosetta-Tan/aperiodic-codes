@@ -5,6 +5,7 @@ form {
 
 /* Center the content vertically and horizontally */
 .centered-content {
+    margin-top: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
