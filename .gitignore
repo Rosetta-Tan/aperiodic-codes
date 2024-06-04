@@ -165,3 +165,7 @@ cython_debug/
 data/
 
 sbatch_scripts/
+
+# node
+.parcel-cache/
+node_modules/
