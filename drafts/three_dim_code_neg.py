@@ -1,6 +1,6 @@
 '''
-Cut window is negative eigenspace
-Obtain tiling in the postive eigenspace 
+Cut window is positive eigenspace
+Obtain tiling in the negative eigenspace 
 '''
 
 from timeit import default_timer as timer
@@ -165,7 +165,7 @@ def calc_code(project_pts, adjacency_matrix,h):
     return fig, ax, min_hamming_weight
 
 def pipeline(n):
-    project_pts, adjacency_matrix = tiling(n)
+    project_pts, adjacency_matrix = tiling_neg(n)
     h = get_laplacian_code(adjacency_matrix, anti=False)
     fig1, ax1, d1 = calc_code(project_pts, adjacency_matrix, h)
     if d1:
@@ -189,5 +189,5 @@ def pipeline(n):
     plt.show()
 
 if __name__ == '__main__':
-    n = 6
+    n = 8
     pipeline(n)
