@@ -3,38 +3,7 @@ import numpy as np
 from scipy.spatial import ConvexHull, Delaunay
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
-def gen_lat(n):
-    '''
-    Generate the 6-dimensional hypercubic lattice
-    Return:
-        lat_pts: np.array, shape=(6, n**6)
-        - lattice pts are column vectors
-        - lat_pts[0, :]: x0 coordinates for all pts
-        - lat_pts[1, :]: x1 coordinates
-        - ...
-        - lat_pts[5, :]: x5 coordinates
-    '''
-    lat_pts = np.array(
-            np.meshgrid(*([np.arange(0, n)] * 6), indexing='ij')
-        ).reshape(6, -1)
-    return lat_pts
-
-def gen_voronoi():
-    '''
-    Compute the 6-dimensional Voronoi unit cell centered around origin
-    Return:
-        voronoi: np.array, shape=(6, 2**6)
-        - lattice pts are column vectors
-        - voronoi[:, 0]: the first pt [-0.5, -0.5, -0.5, -0.5, -0.5, -0.5].T
-        - voronoi[:, 1]: the second pt [-0.5, -0.5, -0.5, -0.5, -0.5, 0.5].T
-        - ...
-        - voronoi[:, 2**6-1]: the last pt [0.5, 0.5, 0.5, 0.5, 0.5, 0.5].T
-    '''
-    voronoi = np.array(
-        np.meshgrid(*([[-0.5, 0.5]] * 6), indexing='ij')
-    ).reshape(6, -1)
-    return voronoi
+from cnp_utils import gen_lat, gen_voronoi
 
 def gen_proj_pos():
     '''
@@ -45,6 +14,7 @@ def gen_proj_pos():
     '''
     costheta = 1/np.sqrt(5)
     sintheta = 2/np.sqrt(5)
+    # Each vector is a row vector. shape: (1, 3)
     v6 = np.array([0, 0, np.sqrt(2)])
     v1 = np.array([np.sqrt(2)*sintheta, 0, np.sqrt(2)*costheta])
     v2 = np.array([
@@ -117,11 +87,7 @@ def voronoi_project(voronoi, proj_neg, visualize=False):
     triacontahedron = ConvexHull((proj_neg @ voronoi).T)
     assert len(triacontahedron.simplices) == 60, \
         f'len(triacontahedron.simplices): {len(triacontahedron.simplices)}'
-    
-    hull_pts = (proj_neg @ voronoi).T[triacontahedron.vertices]
-    # Create a Delaunay triangulation object
-    del_obj = Delaunay(hull_pts)
-    
+
     if visualize:    
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -159,7 +125,7 @@ def cut(lat_pts, voronoi, proj, offset_vec=None):
         voronoi: np.array, shape=(6, 2**6)
         - voronoi cell around origin in 6D
         proj: np.array, shape=(3, 6)
-        - projection isometry matrix into the negative eigenvalue 3D subspace
+        - projection isometry matrix into the corresponding eigval 3D subspace
         (default: negative eigenvalue)
     Return:
         cut_pts: np.array, shape=(6, n_cut)
@@ -228,13 +194,13 @@ def project(cut_pts, proj):
     (default: positive eigenvalue)
     Return:
         np.array, shape=(3, n_cut)
-        - projected points in
+        - projected points
     '''
     return proj @ cut_pts
 
-def tiling(n, visualize=False):
-    lat_pts = gen_lat(n)
-    voronoi = gen_voronoi()
+def tiling(low, high, visualize=False):
+    lat_pts = gen_lat(low, high, dim=6)
+    voronoi = gen_voronoi(dim=6)
     # projection isometry matrix into the positive eigenvalue 3D subspace
     proj_pos = gen_proj_pos()
     # projection isometry matrix into the negative eigenvalue 3D subspace
@@ -260,9 +226,9 @@ def tiling(n, visualize=False):
 
     return proj_pts, adjacency_matrix
 
-def tiling_neg(n, visualize=False):
-    lat_pts = gen_lat(n)
-    voronoi = gen_voronoi()
+def tiling_neg(low, high, visualize=False):
+    lat_pts = gen_lat(low, high, dim=6)
+    voronoi = gen_voronoi(dim=6)
     # projection isometry matrix into the positive eigenvalue 3D subspace
     proj_pos = gen_proj_pos()
     # projection isometry matrix into the negative eigenvalue 3D subspace
@@ -294,9 +260,9 @@ def tiling_neg(n, visualize=False):
 
 
 def test():
-    n = 6
-    lat_pts = gen_lat(n)
-    voronoi = gen_voronoi()
+    high = 4
+    low = -3
+    voronoi = gen_voronoi(dim=6)
     proj_pos = gen_proj_pos()
     proj_neg = gen_proj_neg()
     for i in range(3):
@@ -337,16 +303,17 @@ def test():
     projections both span the bases for an icosahedron.
     '''
     
-    # # make tiling
-    # proj_pts, adjacency_matrix = tiling(n, visualize=False)
-    # ax.scatter(proj_pts[0], proj_pts[1], proj_pts[2])
-    # for i in range(proj_pts.shape[1]):
-    #     for j in range(i+1, proj_pts.shape[1]):
-    #         if adjacency_matrix[i, j]:
-    #             ax.plot([proj_pts[0, i], proj_pts[0, j]],
-    #                     [proj_pts[1, i], proj_pts[1, j]],
-    #                     [proj_pts[2, i], proj_pts[2, j]],
-    #                     color='gray', alpha=0.5)
+    # make tiling
+    fig, ax = plt.subplots(subplot_kw={'projection': '3d'})
+    proj_pts, adjacency_matrix = tiling(low, high, visualize=False)
+    ax.scatter(proj_pts[0], proj_pts[1], proj_pts[2])
+    for i in range(proj_pts.shape[1]):
+        for j in range(i+1, proj_pts.shape[1]):
+            if adjacency_matrix[i, j]:
+                ax.plot([proj_pts[0, i], proj_pts[0, j]],
+                        [proj_pts[1, i], proj_pts[1, j]],
+                        [proj_pts[2, i], proj_pts[2, j]],
+                        color='gray', alpha=0.5)
     
     plt.show()
 
