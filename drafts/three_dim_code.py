@@ -31,13 +31,13 @@ def get_laplacian_code(adjacency_matrix, anti=False):
     return parity_check_matrix
 
 def get_classical_code_distance_time_limit(h, time_limit=10):
-    if rank(h) == h.shape[1]:
-        print('Code is full rank, no codewords')
-        return np.inf
-    else:
-        start = timer()
-        ker = nullspace(h)
-        def find_min_weight_while_build(matrix):
+    '''
+    Calculate the code distance of the classical code within the time limit.
+    Return:
+        k: int, the dimension of the code
+        d: int, the minimum Hamming distance found within the time limit
+    '''
+    def _find_min_weight_while_build(matrix):
             span = []
             min_hamming_weight = np.inf
             for ir, row in enumerate(matrix):
@@ -61,8 +61,16 @@ def get_classical_code_distance_time_limit(h, time_limit=10):
                 span = list(np.unique(temp + span, axis=0))
             assert len(span) == 2**len(matrix) - 1
             return min_hamming_weight
-        min_hamming_weight = find_min_weight_while_build(ker)
-        return min_hamming_weight
+    
+    if rank(h) == h.shape[1]:
+        print('Code is full rank, no codewords')
+        return 0, np.inf
+    else:
+        start = timer()
+        ker = nullspace(h)
+        k = len(ker)
+        d = _find_min_weight_while_build(ker)
+        return k, d
 
 def get_classical_code_distance_special_treatment(h, target_weight):
     """_summary_
@@ -145,49 +153,54 @@ def draw_laplacian_code_logical(proj_pts, adjacency_matrix, logical_op):
 
     return fig, ax
 
-def calc_code(project_pts, adjacency_matrix,h):
+def pipeline_calc_code(project_pts, adjacency_matrix,h):
     # get the minimum distance of the code
-    min_hamming_weight = get_classical_code_distance_time_limit(h, time_limit=30)
-    print(f'minimum Hamming weight: {min_hamming_weight}')
+    k, d = get_classical_code_distance_time_limit(h, time_limit=10)
+    print(f'k={k}, d={d}')
     
-    if min_hamming_weight == np.inf:
-        return None, None, None
+    if d == np.inf:
+        return None, None, None, None
 
     # get the logical operator
-    _, logical_op = get_classical_code_distance_special_treatment(
-        h, min_hamming_weight)
+    _, logical_op = get_classical_code_distance_special_treatment(h, d)
 
     # draw the code
     fig, ax = draw_laplacian_code_logical(project_pts, 
                                           adjacency_matrix,
                                           logical_op)
     
-    return fig, ax, min_hamming_weight
+    return fig, ax, k, d
 
-def pipeline(n):
-    project_pts, adjacency_matrix = tiling(n)
+def pipeline(low, high):
+    project_pts, adjacency_matrix = tiling(low, high)
+    n = project_pts.shape[1]
     h = get_laplacian_code(adjacency_matrix, anti=False)
-    fig1, ax1, d1 = calc_code(project_pts, adjacency_matrix, h)
+    fig1, ax1, k1, d1 = pipeline_calc_code(project_pts, adjacency_matrix, h)
     if d1:
-        ax1.set_title(f'Laplacian code, d={d1}')
+        ax1.set_title(f'Laplacian code, [n,k,d]=[{n},{k1},{d1}]')
+        ax1.savefig(f'lap_low={low}_high={high}.png')
 
     h = get_laplacian_code(adjacency_matrix, anti=True)
-    fig2, ax2, d2 = calc_code(project_pts, adjacency_matrix, h)
+    fig2, ax2, k2, d2 = pipeline_calc_code(project_pts, adjacency_matrix, h)
     if d2:
-        ax2.set_title(f'Anti-Laplacian code, d={d2}')
+        ax2.set_title(f'Anti-Laplacian code, [n,k,d]=[{n},{k2},{d1}]')
+        ax2.savefig(f'anti_lap_low={low}_high={high}.png')
 
-    h = get_adjacency_code(adjacency_matrix, anti=False)
-    fig3, ax3, d3 = calc_code(project_pts, adjacency_matrix, h)
-    if d3:
-        ax3.set_title(f'Adjacency code, d={d3}')
+    # h = get_adjacency_code(adjacency_matrix, anti=False)
+    # fig3, ax3, k3, d3 = calc_code(project_pts, adjacency_matrix, h)
+    # if d3:
+    #     ax3.set_title(f'Adjacency code, [n,k,d]=[{n},{k3},{d3}]')
+    #     ax3.savefig(f'adj_low={low}_high={high}.png')
 
-    h = get_adjacency_code(adjacency_matrix, anti=True)
-    fig4, ax4, d4 = calc_code(project_pts, adjacency_matrix, h)
-    if d4:
-        ax4.set_title(f'Anti-Adjacency code, d={d4}')
+    # h = get_adjacency_code(adjacency_matrix, anti=True)
+    # fig4, ax4, k4, d4 = calc_code(project_pts, adjacency_matrix, h)
+    # if d4:
+    #     ax4.set_title(f'Anti-Adjacency code, [n,k,d]=[{n},{k4},{d4}]')
+    #     ax4.savefig(f'anti_adj_low={low}_high={high}.png')
 
     plt.show()
 
 if __name__ == '__main__':
-    n = 6
-    pipeline(n)
+    low = -3
+    high = 4
+    pipeline(low, high)
