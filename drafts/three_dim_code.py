@@ -178,13 +178,13 @@ def pipeline(low, high):
     fig1, ax1, k1, d1 = pipeline_calc_code(project_pts, adjacency_matrix, h)
     if d1:
         ax1.set_title(f'Laplacian code, [n,k,d]=[{n},{k1},{d1}]')
-        ax1.savefig(f'lap_low={low}_high={high}.png')
+        fig1.savefig(f'lap_low={low}_high={high}.png')
 
     h = get_laplacian_code(adjacency_matrix, anti=True)
     fig2, ax2, k2, d2 = pipeline_calc_code(project_pts, adjacency_matrix, h)
     if d2:
-        ax2.set_title(f'Anti-Laplacian code, [n,k,d]=[{n},{k2},{d1}]')
-        ax2.savefig(f'anti_lap_low={low}_high={high}.png')
+        ax2.set_title(f'Anti-Laplacian code, [n,k,d]=[{n},{k2},{d2}]')
+        fig2.savefig(f'anti_lap_low={low}_high={high}.png')
 
     # h = get_adjacency_code(adjacency_matrix, anti=False)
     # fig3, ax3, k3, d3 = calc_code(project_pts, adjacency_matrix, h)
@@ -200,7 +200,32 @@ def pipeline(low, high):
 
     plt.show()
 
+def check_expander(low, high):
+    project_pts, adjacency_matrix = tiling(low, high)
+    # get the parity-check matrix,
+    # which is equivalent to the adjacency matrix of bipartite graph
+    h = get_laplacian_code(adjacency_matrix, anti=True).astype(float)
+    
+    # normalize the bipartite adjacency matrix
+    left_mul = np.zeros_like(h)
+    for i in range(h.shape[0]):
+        left_mul[i, i] = np.sqrt(1 / np.sum(h[i]))
+    
+    right_mul = np.zeros_like(h)
+    for i in range(h.shape[0]):
+        right_mul[i, i] = np.sqrt(1 / np.sum(h[:,i]))
+    
+    h_normalized = left_mul @ h @ right_mul
+    # compute the singular values of the normalized bipartite adjacency matrix
+    s = np.linalg.svd(h_normalized, compute_uv=False)
+
+    assert np.allclose(s[0], 1)
+    # check the spectral gap
+    spectral_gap = 1 - s[1]
+    print(f'Spectral gap: {spectral_gap}')
+    
 if __name__ == '__main__':
     low = -3
     high = 4
+    check_expander(low, high)
     pipeline(low, high)
