@@ -303,7 +303,7 @@ def get_classical_code_transpose_distance_special_treatment(h, gen, target_weigh
         print(f'Elapsed time for finding minimum Hamming weight while buiding codeword space : {end-start} seconds', flush=True)
         return min_hamming_weight, logical_op
     
-savedir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/qc_code/pinwheel'
+savedir = 'data/qc_code/pinwheel'
 subdir = f'gen={gen}'
 if not os.path.exists(os.path.join(savedir, subdir)):
     os.makedirs(os.path.join(savedir, subdir))

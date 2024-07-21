@@ -9,19 +9,19 @@ from helpers_distance import *
 import json
 from itertools import product
 
-gen = 6
+gen = 5
 wing_percentile = 0.4
-sep = 10
+sep = 10  # p = (sep+1), the periodicity of the boundary surgery
 ANTIPARITY = True
-readdir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/pinwheel/laplacian/'
-readdir = os.path.join(readdir, f'antiparity={ANTIPARITY}_gen={gen}')
+readdir = os.path.join('/Users/yitan/Coding/aperiodic-codes/data/pinwheel')
+readdir = os.path.join(readdir, f'anti={ANTIPARITY}_gen={gen}_sep={sep}')
 # readdir = os.path.join(readdir, f'antiparity={ANTIPARITY}_gen={gen}_sep={sep}')
 # # readdir = os.path.join(readdir, f'antiparity={ANTIPARITY}_gen={gen}_wing={wing_percentile}')
 
 # savedir = '/Users/yitan/Google Drive/My Drive/from_cannon/qmemory_simulation/data/qc_code/pinwheel/laplacian'
-savedir = '/Users/yitan/Library/CloudStorage/GoogleDrive-yitan@g.harvard.edu/My Drive/from_cannon/qmemory_simulation/data/qc_code/pinwheel/laplacian/'
+savedir = '/Users/yitan/Coding/aperiodic-codes/data/pinwheel/'
 # savedir = os.path.join(savedir, f'antiparity={ANTIPARITY}_gen={gen}')
-savedir = os.path.join(savedir, f'antiparity={ANTIPARITY}_gen={gen}_sep={sep}')
+savedir = os.path.join(savedir, f'anti={ANTIPARITY}_gen={gen}_sep={sep}')
 # savedir = os.path.join(savedir, f'antiparity={ANTIPARITY}_gen={gen}_sep={sep}_debug')
 # savedir = os.path.join(savedir, f'antiparity={ANTIPARITY}_gen={gen}_sep={sep}_longdir')
 # savedir = os.path.join(savedir, f'antiparity={ANTIPARITY}_gen={gen}_wing={wing_percentile}')
@@ -206,29 +206,29 @@ def boundary_surgery_evenly_long_direction(h, vertices, sep=1):
 ############################################################################################################
 # Generate code
 ############################################################################################################
-# triangles = []
-# ctg = 0
-# A = 0.+0.j
-# B = 2.+1.j
-# C = 2.+0.j
-# D = 0.+1.j
-# triangles.append((ctg, A, B, C))
-# triangles.append((ctg, B, A, D))
-# for _ in range(gen):
-#     triangles = subdivide(triangles)
-# vertices = get_vertices(triangles)
-# edges = get_edges(triangles, vertices)
-# h = get_laplacian_code(vertices, edges)
-# h, surgery_inds = boundary_surgery_evenly(h, vertices, sep=sep)
+triangles = []
+ctg = 0
+A = 0.+0.j
+B = 2.+1.j
+C = 2.+0.j
+D = 0.+1.j
+triangles.append((ctg, A, B, C))
+triangles.append((ctg, B, A, D))
+for _ in range(gen):
+    triangles = subdivide(triangles)
+vertices = get_vertices(triangles)
+edges = get_edges(triangles, vertices)
+h = get_laplacian_code(vertices, edges)
+h, surgery_inds = boundary_surgery_evenly(h, vertices, sep=sep)
 
 ############################################################################################################
 # load code from file
 ############################################################################################################
-h = np.load(os.path.join(readdir, 'h.npy'))
-vertices = np.load(os.path.join(readdir, 'vertices.npy'))
-edges = np.load(os.path.join(readdir, 'edges.npy'), allow_pickle=True)
-h, surgery_inds = boundary_surgery_evenly(h, vertices, sep=sep)
-# lowwt_logical_op = np.load(os.path.join(readdir, 'lowwt_logical_op.npy'))
+# h = np.load(os.path.join(readdir, 'h.npy'))
+# vertices = np.load(os.path.join(readdir, 'vertices.npy'))
+# edges = np.load(os.path.join(readdir, 'edges.npy'), allow_pickle=True)
+# h, surgery_inds = boundary_surgery_evenly(h, vertices, sep=sep)
+# # lowwt_logical_op = np.load(os.path.join(readdir, 'lowwt_logical_op.npy'))
 
 ############################################################################################################
 # Compute code properties
@@ -241,79 +241,79 @@ np.savetxt(os.path.join(savedir, 'logical_basis.txt'), logical_basis)
 # print('shape of h = ', h.shape)
 # print('k = ', k)
     
-# d_bound, lowwt_logical_op = get_classical_code_distance_special_treatment(h=h, target_weight=get_classical_code_distance_time_limit(h, time_limit=120))
+d_bound, lowwt_logical_op = get_classical_code_distance_special_treatment(h=h, target_weight=get_classical_code_distance_time_limit(h, time_limit=120))
 # print('d_bound = ', d_bound)
 
-# ############################################################################################################
-# # Visualize logicals
-# ############################################################################################################
-# xs = np.array([v.real for v in vertices])
-# ys = np.array([v.imag for v in vertices])
+############################################################################################################
+# Visualize logicals
+############################################################################################################
+xs = np.array([v.real for v in vertices])
+ys = np.array([v.imag for v in vertices])
 
-# # '''Visualize all logical operators'''
-# # logical_op_coeffs = np.asarray(list(product([0, 1], repeat=len(logical_basis))))
-# # for i in range(len(logical_op_coeffs)):
-# #     logical_op = np.mod((logical_op_coeffs[i]@logical_basis).flatten(), 2)
-# #     pos_ones = np.where(logical_op == 1)[0]
-# #     if len(pos_ones) > h.shape[1]//8:
-# #         continue 
-# #     fig, ax = plt.subplots()
-# #     ax.scatter(xs, ys, marker='o', s=50, color='blue', alpha=0.5, zorder=0)
-# #     ax.scatter(xs[pos_ones], ys[pos_ones], marker='*', s=300, color='pink', zorder=1)
-# #     for edge in edges:
-# #         plt.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], color='gray', alpha=0.5, zorder=0)
+# '''Visualize all logical operators'''
+# logical_op_coeffs = np.asarray(list(product([0, 1], repeat=len(logical_basis))))
+# for i in range(len(logical_op_coeffs)):
+#     logical_op = np.mod((logical_op_coeffs[i]@logical_basis).flatten(), 2)
+#     pos_ones = np.where(logical_op == 1)[0]
+#     if len(pos_ones) > h.shape[1]//8:
+#         continue 
+#     fig, ax = plt.subplots()
+#     ax.scatter(xs, ys, marker='o', s=50, color='blue', alpha=0.5, zorder=0)
+#     ax.scatter(xs[pos_ones], ys[pos_ones], marker='*', s=300, color='pink', zorder=1)
+#     for edge in edges:
+#         plt.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], color='gray', alpha=0.5, zorder=0)
 
-# #     ax.set_aspect('equal')
-# #     ax.set_axis_off()
-# #     ax.set_title(f'logical operator {i}')
-# #     fig.set_size_inches(30,30)
-# #     savename = f'logical_op_{i}.pdf'
-# #     savepath = os.path.join(savedir, savename)
-# #     fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
+#     ax.set_aspect('equal')
+#     ax.set_axis_off()
+#     ax.set_title(f'logical operator {i}')
+#     fig.set_size_inches(30,30)
+#     savename = f'logical_op_{i}.pdf'
+#     savepath = os.path.join(savedir, savename)
+#     fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
 
 
-# # '''Visualize low-weight logical operators'''
-# fig, ax = plt.subplots()
-# pos_ones = np.where(lowwt_logical_op == 1)[0]
-# # ax.scatter(np.array([v.real for v in vertices]), np.array([v.imag for v in vertices]), marker='o')
-# # # annotate the points
-# # for ipt in range(len(xs)):
-# #     ax.annotate(ipt, (xs[ipt], ys[ipt]), zorder=2)
-# ax.scatter(xs, ys, marker='o', color='#6168B0', s=300, edgecolors='k', zorder=1)
-# ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', s=300, edgecolors='k', color='#F15C5B', zorder=2)
-# # ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', s=300, edgecolors='k', color='#F15E22', zorder=2)
+# '''Visualize low-weight logical operators'''
+fig, ax = plt.subplots()
+pos_ones = np.where(lowwt_logical_op == 1)[0]
+# ax.scatter(np.array([v.real for v in vertices]), np.array([v.imag for v in vertices]), marker='o')
+# # annotate the points
+# for ipt in range(len(xs)):
+#     ax.annotate(ipt, (xs[ipt], ys[ipt]), zorder=2)
+ax.scatter(xs, ys, marker='o', color='#6168B0', s=300, edgecolors='k', zorder=1)
+ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', s=300, edgecolors='k', color='#F15C5B', zorder=2)
+# ax.scatter(xs[pos_ones], ys[pos_ones], marker='o', s=300, edgecolors='k', color='#F15E22', zorder=2)
 
-# ax.scatter(xs[surgery_inds], ys[surgery_inds], marker='o', edgecolors='k', s=400, color='#DADADA', zorder=5)
-# # ax.scatter(xs[upper_surgery_inds], ys[upper_surgery_inds], marker='o', s=300, color='red', alpha=0.5, zorder=1)
-# # ax.scatter(xs[right_surgery_inds], ys[right_surgery_inds], marker='o', s=300, color='blue', alpha=0.5, zorder=2)
-# # ax.scatter(xs[lower_surgery_inds], ys[lower_surgery_inds], marker='o', s=300, color='green', alpha=0.5, zorder=3)
-# # ax.scatter(xs[left_surgery_inds], ys[left_surgery_inds], marker='o', s=300, color='purple', alpha=0.5, zorder=4)
+ax.scatter(xs[surgery_inds], ys[surgery_inds], marker='o', edgecolors='k', s=400, color='#DADADA', zorder=5)
+# ax.scatter(xs[upper_surgery_inds], ys[upper_surgery_inds], marker='o', s=300, color='red', alpha=0.5, zorder=1)
+# ax.scatter(xs[right_surgery_inds], ys[right_surgery_inds], marker='o', s=300, color='blue', alpha=0.5, zorder=2)
+# ax.scatter(xs[lower_surgery_inds], ys[lower_surgery_inds], marker='o', s=300, color='green', alpha=0.5, zorder=3)
+# ax.scatter(xs[left_surgery_inds], ys[left_surgery_inds], marker='o', s=300, color='purple', alpha=0.5, zorder=4)
 
-# for edge in edges:
-#     ax.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], lw=2, color='black', alpha=0.9, zorder=0)
-# ax.set_aspect('equal')
-# ax.set_axis_off()
-# savename = f'low_weight_logical_op.pdf'
-# savepath = os.path.join(savedir, savename)
-# # fig.set_size_inches(20,20)
-# # fig.set_size_inches(30,30)
-# fig.set_size_inches(60,60)
-# fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
+for edge in edges:
+    ax.plot([edge[0].real, edge[1].real], [edge[0].imag, edge[1].imag], lw=2, color='black', alpha=0.9, zorder=0)
+ax.set_aspect('equal')
+ax.set_axis_off()
+savename = f'low_weight_logical_op.pdf'
+savepath = os.path.join(savedir, savename)
+# fig.set_size_inches(20,20)
+# fig.set_size_inches(30,30)
+fig.set_size_inches(60,60)
+fig.savefig(savepath, bbox_inches='tight', pad_inches=0)
 
-# ############################################################################################################
-# # Save data
-# ############################################################################################################
-# # data = {
-# #     'm': int(h.shape[0]),
-# #     'n': int(h.shape[1]),
-# #     'k': int(k),
-# #     'd_bound': int(d_bound)
-# # }
-# # with open(os.path.join(savedir, 'data.json'), 'w') as f:
-# #     json.dump(data, f)
-# # # np.save(os.path.join(savedir, 'h.npy'), h)
-# # # np.save(os.path.join(savedir, 'vertices.npy'), vertices)
-# # # np.save(os.path.join(savedir, 'edges.npy'), edges)
+############################################################################################################
+# Save data
+############################################################################################################
+data = {
+    'm': int(h.shape[0]),
+    'n': int(h.shape[1]),
+    'k': int(k),
+    'd_bound': int(d_bound)
+}
+with open(os.path.join(savedir, 'data.json'), 'w') as f:
+    json.dump(data, f)
+np.save(os.path.join(savedir, 'h.npy'), h)
+# # np.save(os.path.join(savedir, 'vertices.npy'), vertices)
+# # np.save(os.path.join(savedir, 'edges.npy'), edges)
 # np.save(os.path.join(savedir, 'lowwt_logical_op.npy'), lowwt_logical_op)
 
 
