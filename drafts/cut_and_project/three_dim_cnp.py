@@ -165,7 +165,6 @@ def cut(lat_pts, voronoi, proj, offset_vec=None):
         else:
             if _is_point_in_hull(pt_proj, triacontahedron):
                 cut_pts.append(lat_pts[:, i])
-    print(f'number of points in the cut: {len(cut_pts)}')
 
     '''
     connect neighboring points in cut_pts 
