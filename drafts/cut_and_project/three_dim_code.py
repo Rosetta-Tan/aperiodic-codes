@@ -6,6 +6,7 @@ Obtain tiling in the postive eigenspace
 from timeit import default_timer as timer
 import numpy as np
 from ldpc.mod2 import *
+from cnp_utils import *
 from three_dim_cnp import *
 
 def get_adjacency_code(adjacency_matrix, anti=False):

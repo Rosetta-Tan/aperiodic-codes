@@ -3,78 +3,7 @@ import numpy as np
 from scipy.spatial import ConvexHull, Delaunay
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from cnp_utils import gen_lat, gen_voronoi
-
-def gen_proj_pos():
-    '''
-    Generate the projection matrix into the positive eigenvalue 3D subspace
-    shape: (3, 6)
-    Notation follows R. M. K. Dietl and J.-H. Eschenburg,
-    see also Yi's notes page 4.
-    '''
-    costheta = 1/np.sqrt(5)
-    sintheta = 2/np.sqrt(5)
-    # Each vector is a row vector. shape: (1, 3)
-    v6 = np.array([0, 0, np.sqrt(2)])
-    v1 = np.array([np.sqrt(2)*sintheta, 0, np.sqrt(2)*costheta])
-    v2 = np.array([
-        np.sqrt(2)*sintheta*np.cos(2*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(2*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    v3 = np.array([
-        np.sqrt(2)*sintheta*np.cos(4*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(4*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    v4 = np.array([
-        np.sqrt(2)*sintheta*np.cos(6*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(6*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    v5 = np.array([
-        np.sqrt(2)*sintheta*np.cos(8*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(8*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    proj_pos = np.vstack([v1, v2, v3, v4, v5, v6]).T  # shape: (3, 6)
-    
-    return proj_pos
-
-def gen_proj_neg():
-    '''
-    Generate the projection matrix into the negative eigenvalue 3D subspace
-    shape: (3, 6)
-    Notation follows R. M. K. Dietl and J.-H. Eschenburg,
-    see also Yi's notes page 4.
-    '''
-    costheta = 1/np.sqrt(5)
-    sintheta = 2/np.sqrt(5)
-    w6 = np.array([0, 0, -np.sqrt(2)])
-    w1 = np.array([np.sqrt(2)*sintheta, 0, np.sqrt(2)*costheta])
-    w2 = np.array([
-        np.sqrt(2)*sintheta*np.cos(4*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(4*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    w3 = np.array([
-        np.sqrt(2)*sintheta*np.cos(8*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(8*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    w4 = np.array([
-        np.sqrt(2)*sintheta*np.cos(2*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(2*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    w5 = np.array([
-        np.sqrt(2)*sintheta*np.cos(6*np.pi/5),
-        np.sqrt(2)*sintheta*np.sin(6*np.pi/5),
-        np.sqrt(2)*costheta
-        ])
-    proj_neg = np.vstack([w1, w2, w3, w4, w5, w6]).T  # shape: (3, 6)
-
-    return proj_neg
+from cnp_utils import *
 
 def voronoi_project(voronoi, proj_neg, visualize=False):
     '''
