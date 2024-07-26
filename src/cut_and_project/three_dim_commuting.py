@@ -225,15 +225,14 @@ def project(cut_pts, proj):
     '''
     return proj @ cut_pts
 
-def full_commutation(hx_vv, hx_cc, hz_vv, hz_cc, n):
+def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc):
     '''
     Check commutation of all pairs of stabilizers.
     '''
-    assert hx_vv.shape == hx_cc.shape == \
-            hz_vv.shape == hz_cc.shape == (n**6, n**6)
+    assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return (hx @ hz.T) % 2 == 0 and (hz @ hx.T) % 2 == 0
+    return np.all((hx @ hz.T) % 2 == 0) and np.all((hz @ hx.T) % 2 == 0)
 
 if __name__ == '__main__':
     # FIXME: remove this part for the final version
@@ -273,3 +272,6 @@ if __name__ == '__main__':
     #         if new_hx[:, i].dot(new_hz[:, j]) % 2 != 0:
     #             print(f'Commutation check failed: {i}, {j}')
     #             break
+
+    # Check commutation
+    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc))
