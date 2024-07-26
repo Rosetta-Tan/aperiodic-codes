@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../drafts/cut_and_project')
+sys.path.append('../src/cut_and_project')
 import numpy as np
 import unittest
 from three_dim_commuting import *
