@@ -43,79 +43,6 @@ def voronoi_project(voronoi, proj_neg, visualize=False):
     
     return pts
 
-def cut(lat_pts, voronoi, proj, offset_vec=None):
-    '''
-    Select lattice points in the 6D lattice.
-        - condition: the lattice point is inside the ocnvex hull of
-        the Voronoi unit cell projected to the perpendiculr 3D space.
-    Args:
-        lat_pts: np.array, shape=(6, n**6)
-        - lattice points in 6D
-        voronoi: np.array, shape=(6, 2**6)
-        - voronoi cell around origin in 6D
-        proj: np.array, shape=(3, 6)
-        - projection isometry matrix into the corresponding eigval 3D subspace
-        (default: negative eigenvalue)
-    Return:
-        cut_pts: np.array, shape=(6, n_cut)
-        - selected points in 6D
-        - cut_pts[0]: x0 coordinates
-        - cut_pts[1]: x1 coordinates
-        - ...
-        - cut_pts[5]: x5 coordinates
-    '''
-    # convex hull of projected Voronoi cell in 3D
-    # scipy requires pts to be row vectors
-    triacontahedron = ConvexHull((proj @ voronoi).T)
-    
-    # Function to check if a point is inside the convex hull
-    def _is_point_in_hull(point, hull, offset_3D=None):
-        # We add the homogeneous coordinate for the point
-        point = np.append(point, 1)
-        # Loop over each facet of the hull
-        for equation in hull.equations:
-            if offset_vec is None:
-                if np.dot(equation, point) > 0:
-                    return False
-            else:
-                offset_3D = np.append(offset_3D, 0)
-                if np.dot(equation, (point-offset_3D)) > 0:
-                    return False
-        return True
-    
-    # Select lattice points inside the convex hull
-    cut_pts = []
-    for i in range(lat_pts.shape[1]):
-        pt_proj = proj @ lat_pts[:, i]
-        if offset_vec is not None:
-            offset_3D = proj @ offset_vec.reshape(-1, 1)
-            if _is_point_in_hull(pt_proj, triacontahedron, offset_3D):
-                cut_pts.append(lat_pts[:, i])
-        else:
-            if _is_point_in_hull(pt_proj, triacontahedron):
-                cut_pts.append(lat_pts[:, i])
-
-    '''
-    connect neighboring points in cut_pts 
-    according to connectivity in the 6D lattice:
-    if two points are neighbors in the 6D lattice,
-    then they are connected by an edge in the 3D tiling
-    '''
-    # Check if two points are neighbors in 6D
-    def _are_neighbors(pt1, pt2):  
-        return np.sum(np.abs(pt1 - pt2)) == 1
-    # Connect neighboring points in cut_pts
-    cut_pts = np.asarray(cut_pts).T  # shape: (6, n_cut)
-    n_cut = cut_pts.shape[1]
-    adjacency_matrix = np.zeros((n_cut, n_cut), dtype=bool)
-    for i in range(n_cut):
-        for j in range(i+1, n_cut):
-            if _are_neighbors(cut_pts[:, i], cut_pts[:, j]):
-                adjacency_matrix[i, j] = True
-                adjacency_matrix[j, i] = True
-
-    return cut_pts, adjacency_matrix
-
 def project(cut_pts, proj):
     '''
     Project the selected points into the selected eigenvalue's 3D subspace.
@@ -125,6 +52,26 @@ def project(cut_pts, proj):
         - projected points
     '''
     return proj @ cut_pts
+
+def are_connected(pt1, pt2):  
+    return np.sum(np.abs(pt1 - pt2)) == 1
+
+def gen_adj_mat(cut_pts):
+    '''
+    connect neighboring points in cut_pts 
+    according to connectivity in the 6D lattice:
+    if two points are neighbors in the 6D lattice,
+    then they are connected by an edge in the 3D tiling
+    '''
+    # Connect neighboring points in cut_pts
+    cut_pts = np.asarray(cut_pts).T  # shape: (6, n_cut)
+    n_cut = cut_pts.shape[1]
+    adjacency_matrix = np.zeros((n_cut, n_cut), dtype=bool)
+    for i in range(n_cut):
+        for j in range(i+1, n_cut):
+            if are_connected(cut_pts[:, i], cut_pts[:, j]):
+                adjacency_matrix[i, j] = True
+                adjacency_matrix[j, i] = True
 
 def tiling(low, high, visualize=False):
     lat_pts = gen_lat(low, high, dim=6)

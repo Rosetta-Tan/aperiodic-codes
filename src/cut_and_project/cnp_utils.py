@@ -122,3 +122,64 @@ def gen_proj_neg():
     proj_neg = np.vstack([w1, w2, w3, w4, w5, w6]).T  # shape: (3, 6)
 
     return proj_neg
+
+def cut(lat_pts, voronoi, original_parity_check_matrix,
+        proj, n, offset_vec=None):
+    '''
+    Select lattice points in the 6D lattice.
+    There are two qubits per vertex in the 6D lattice.
+    A stabilizer will involve both VV and CC type qubits.
+    We keep the feature that there are two qubits per vertex in 3D.
+
+    VV type qubits are the first n**6 qubits.
+    CC type qubits are the last n**6 qubits.
+        - condition: the lattice point is inside the ocnvex hull of
+        the Voronoi unit cell projected to the perpendiculr 3D space.
+    Args:
+        lat_pts: np.array, shape=(6, n**6)
+        - lattice points in 6D
+        voronoi: np.array, shape=(6, 2**6)
+        - voronoi cell around origin in 6D
+        proj: np.array, shape=(3, 6)
+        - projection isometry matrix into the corresponding eigval 3D subspace
+        (default: negative eigenvalue)
+    Return:
+        cut_pts: np.array, shape=(6, n_cut)
+        - selected points in 6D
+        - cut_pts[0]: x0 coordinates
+        - cut_pts[1]: x1 coordinates
+        - ...
+        - cut_pts[5]: x5 coordinates
+    '''
+    # FIXME: decouple cut and obtain new parity-check matrix
+    # TODO: implement offset vector
+
+    if offset_vec is not None:
+        raise NotImplementedError('Offset vector is not implemented yet')
+    # convex hull of projected Voronoi cell in 3D
+    # scipy requires pts to be row vectors
+    triacontahedron = ConvexHull((proj @ voronoi).T)
+    
+    # Select lattice points inside the convex hull
+    full_to_cut_ind_map = {}
+    cut_pts = []
+    for i in range(lat_pts.shape[1]):
+        pt_proj = proj @ lat_pts[:, i]
+        if is_point_in_hull(pt_proj, triacontahedron):
+            full_to_cut_ind_map[i] = len(cut_pts)
+            cut_pts.append(lat_pts[:, i])
+    cut_pts = np.asarray(cut_pts).T # shape=(6, n_cut)
+ 
+    return cut_pts, full_to_cut_ind_map
+
+def project(cut_pts, proj):
+    '''
+    Project the selected points into the selected eigenvalue's 3D subspace.
+    (default: positive eigenvalue)
+    Args:
+        proj: np.array, shape=(3, 6)
+    Return:
+        np.array, shape=(3, n_cut)
+        - projected points
+    '''
+    return proj @ cut_pts
