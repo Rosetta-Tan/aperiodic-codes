@@ -1,8 +1,6 @@
-import sys
-sys.path.append('../src/cut_and_project')
-import numpy as np
 import unittest
-from three_dim_commuting import *
+import numpy as np
+from aperiodic_codes.cut_and_project.three_dim_from_hgp import *
 
 class TestSixDimConnectivity(unittest.TestCase):
     def test_hx_vv(self):

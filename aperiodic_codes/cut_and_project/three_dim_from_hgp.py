@@ -4,10 +4,8 @@ from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
 import numpy as np
-from scipy.spatial import ConvexHull
-import matplotlib.pyplot as plt
 from bposd.hgp import hgp
-from cnp_utils import *
+from aperiodic_codes.cut_and_project.cnp_utils import *
 
 def coord_to_idx(x, y, z, n):
     return x * n**2 + y * n + z

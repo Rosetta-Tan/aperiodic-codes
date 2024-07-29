@@ -1,12 +1,11 @@
 # 3D cut and project tiling
 import numpy as np
-from scipy.spatial import ConvexHull, Delaunay
-import matplotlib.pyplot as plt
+from scipy.spatial import ConvexHull
 
 def gen_lat(low, high, dim):
     '''
     Generate the dim-dimensional hypercubic lattice
-    Return:
+    Returns:
         lat_pts: np.array, shape=(dim, n**dim)
         - lattice pts are column vectors
         - lat_pts[0, :]: x0 coordinates for all pts
@@ -22,7 +21,7 @@ def gen_lat(low, high, dim):
 def gen_voronoi(dim):
     '''
     Compute the dim-dimensional Voronoi unit cell centered around origin
-    Return:
+    Returns:
         voronoi: np.array, shape=(6, 2**6)
         - lattice pts are column vectors
         - voronoi[:, 0]: the first pt [-0.5, -0.5, ..., -0.5, -0.5].T
@@ -56,8 +55,7 @@ def gen_proj_pos():
     '''
     Generate the projection matrix into the positive eigenvalue 3D subspace
     shape: (3, 6)
-    Notation follows R. M. K. Dietl and J.-H. Eschenburg,
-    see also Yi's notes page 4.
+    Notation follows R. M. K. Dietl and J.-H. Eschenburg
     '''
     costheta = 1/np.sqrt(5)
     sintheta = 2/np.sqrt(5)
@@ -123,8 +121,7 @@ def gen_proj_neg():
 
     return proj_neg
 
-def cut(lat_pts, voronoi, original_parity_check_matrix,
-        proj, n, offset_vec=None):
+def cut(lat_pts, voronoi, proj, offset_vec=None):
     '''
     Select lattice points in the 6D lattice.
     There are two qubits per vertex in the 6D lattice.
@@ -143,7 +140,7 @@ def cut(lat_pts, voronoi, original_parity_check_matrix,
         proj: np.array, shape=(3, 6)
         - projection isometry matrix into the corresponding eigval 3D subspace
         (default: negative eigenvalue)
-    Return:
+    Returns:
         cut_pts: np.array, shape=(6, n_cut)
         - selected points in 6D
         - cut_pts[0]: x0 coordinates
@@ -166,7 +163,7 @@ def cut(lat_pts, voronoi, original_parity_check_matrix,
     for i in range(lat_pts.shape[1]):
         pt_proj = proj @ lat_pts[:, i]
         if is_point_in_hull(pt_proj, triacontahedron):
-            full_to_cut_ind_map[i] = len(cut_pts)
+            full_to_cut_ind_map.update({i: len(cut_pts)})
             cut_pts.append(lat_pts[:, i])
     cut_pts = np.asarray(cut_pts).T # shape=(6, n_cut)
  
@@ -178,8 +175,7 @@ def project(cut_pts, proj):
     (default: positive eigenvalue)
     Args:
         proj: np.array, shape=(3, 6)
-    Return:
-        np.array, shape=(3, n_cut)
-        - projected points
+    Returns:
+        projected points: np.array, shape=(3, n_cut)
     '''
     return proj @ cut_pts
