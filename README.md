@@ -10,7 +10,7 @@
 #### Examples
 ##### Examine code distance property of classical self-dual graphical codes obtained via nearest-neighbor checking (Laplace operator) on 3D CNP tilings. Verify that anti-Laplacian has linear distance.
 1. Install the module.
-2. Run [3d_self_dual_distance_property.ipynb](scripts/3d_self_dual_distance_property).
+2. Run [3d_self_dual_distance_property.ipynb](scripts/3d_self_dual_distance_property.ipynb).
 
 ##### Check the commutation relation
 1. Install the module.
