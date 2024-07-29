@@ -4,7 +4,7 @@ Cut and project from 5D to 2D to generate a 2D Penrose tiling
 import numpy as np
 from scipy.spatial import ConvexHull, Delaunay
 import matplotlib.pyplot as plt
-from cnp_utils import gen_lat, gen_voronoi
+from aperiodic_codes.cut_and_project.cnp_utils import gen_lat, gen_voronoi
 
 def gen_proj_pos():
     '''
