@@ -4,8 +4,8 @@
 * Install module: In the project root folder that contains `setup.py`, run `pip install -e .` ('e' stands for "experimental").
 * Upgrade module: In project root folder, run `pip install -U .`
 * Core components:
-  * [aperiodic-codes/cut_and_project](aperiodic-codes/cut_and_project/): module for constructing codes on 3D cut-and-project (CNP) tilings.
-  * [aperiodic-codes/substitution](src/substitution/): module for constructing self-dual graphical codes on the 2D pinwheel tiling.
+  * [aperiodic_codes/cut_and_project](aperiodic_codes/cut_and_project/): module for constructing codes on 3D cut-and-project (CNP) tilings.
+  * [aperiodic_codes/substitution](aperiodic_codes/substitution/): module for constructing self-dual graphical codes on the 2D pinwheel tiling.
   * [scripts](scrips): scripts or jupyter notebooks for examining the code properties.
 #### Examples
 ##### Examine code distance property of classical self-dual graphical codes obtained via nearest-neighbor checking (Laplace operator) on 3D CNP tilings. Verify that anti-Laplacian has linear distance.
