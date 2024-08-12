@@ -14,7 +14,7 @@ def gen_lat(low, high, dim):
         - lat_pts[dim-1, :]: x_{dim-1} coordinates
     '''
     lat_pts = np.array(
-            np.meshgrid(*([np.arange(low, high)] * dim), indexing='ij')
+            np.meshgrid(*([np.arange(low, high+1)] * dim), indexing='ij')
         ).reshape(dim, -1)
     return lat_pts
 
