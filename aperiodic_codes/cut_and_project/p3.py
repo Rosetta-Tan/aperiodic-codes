@@ -201,13 +201,14 @@ if __name__ == '__main__':
     lat_pts = gen_lat(low=-n, high=n, dim=5)
     assert lat_pts.shape[1] == (2*n+1)**5, 'Number of lattice points should be n**5'
     voronoi = gen_voronoi(dim=5)
+    offset = np.array([1,1,1,1,1])/4;
     P = proj_mat();
     proj_pos = P[:2,:];
     proj_neg = P[2:,:];
     
-    #R = special_ortho_group.rvs(5);
-    #proj_pos = proj_pos @ R.T;
-    #proj_neg = proj_neg @ R.T;
+    # R = special_ortho_group.rvs(5);
+    # proj_pos = proj_pos @ R.T;
+    # proj_neg = proj_neg @ R.T;
 
     h1 = gen_h1(n)
     h2 = gen_h2(n)
@@ -222,7 +223,7 @@ if __name__ == '__main__':
     np.save(f'{prefix}/penrose_p3/hz_vv_n={n}.npy', hz_vv)
     np.save(f'{prefix}/penrose_p3/hz_cc_n={n}.npy', hz_cc)
 
-    cut_pts, full_to_cut_ind_map = cut(lat_pts, voronoi, proj_neg)
+    cut_pts, full_to_cut_ind_map = cut(lat_pts, voronoi, proj_neg,offset)
     print(cut_pts.shape);
     proj_pts = project(cut_pts, proj_pos)
     new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
