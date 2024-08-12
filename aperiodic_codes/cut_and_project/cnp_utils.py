@@ -158,15 +158,12 @@ def cut(lat_pts, voronoi, proj, offset_vec=None):
         - ...
         - cut_pts[5]: x5 coordinates
     '''
-    # FIXME: decouple cut and obtain new parity-check matrix
-    # TODO: implement offset vector
-
     if offset_vec is not None:
-        raise NotImplementedError('Offset vector is not implemented yet')
-    # convex hull of projected Voronoi cell in 3D
-    # scipy requires pts to be row vectors
-    #triacontahedron = ConvexHull((proj @ voronoi).T)
-    window = (proj @ voronoi).T; 
+        voronoi_shifted = voronoi + np.tile([offset_vec],(voronoi.shape[1],1)).T;
+    else:
+        voronoi_shifted = voronoi;
+
+    window = (proj @ voronoi_shifted).T; 
  
     # Select lattice points inside the convex hull
     full_to_cut_ind_map = {}
