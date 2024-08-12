@@ -1,6 +1,7 @@
 # 3D cut and project tiling
 import numpy as np
-from scipy.spatial import ConvexHull
+from scipy.optimize import linprog
+#from scipy.spatial import ConvexHull
 
 def gen_lat(low, high, dim):
     '''
@@ -34,6 +35,15 @@ def gen_voronoi(dim):
     ).reshape(dim, -1)
     return voronoi
 
+def is_point_in_hull(points, x):
+    n_points = len(points)
+    n_dim = len(x)
+    c = np.zeros(n_points)
+    A = np.r_[points.T,np.ones((1,n_points))]
+    b = np.r_[x, np.ones(1)]
+    lp = linprog(c, A_eq=A, b_eq=b)
+    return lp.success
+'''
 def is_point_in_hull(point, hull, offset_vec=None):
     # Function to check if a point is inside the convex hull
     if offset_vec:
@@ -50,7 +60,7 @@ def is_point_in_hull(point, hull, offset_vec=None):
             if np.dot(equation, (point-offset_3D)) > 0:
                 return False
     return True
-
+'''
 def gen_proj_pos():
     '''
     Generate the projection matrix into the positive eigenvalue 3D subspace
@@ -155,14 +165,15 @@ def cut(lat_pts, voronoi, proj, offset_vec=None):
         raise NotImplementedError('Offset vector is not implemented yet')
     # convex hull of projected Voronoi cell in 3D
     # scipy requires pts to be row vectors
-    triacontahedron = ConvexHull((proj @ voronoi).T)
-    
+    #triacontahedron = ConvexHull((proj @ voronoi).T)
+    window = (proj @ voronoi).T; 
+ 
     # Select lattice points inside the convex hull
     full_to_cut_ind_map = {}
     cut_pts = []
     for i in range(lat_pts.shape[1]):
         pt_proj = proj @ lat_pts[:, i]
-        if is_point_in_hull(pt_proj, triacontahedron):
+        if is_point_in_hull(window,pt_proj):
             full_to_cut_ind_map.update({i: len(cut_pts)})
             cut_pts.append(lat_pts[:, i])
     cut_pts = np.asarray(cut_pts).T # shape=(6, n_cut)
