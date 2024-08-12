@@ -5,7 +5,6 @@ H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
 import numpy as np
 from numpy import array,sqrt,cos,sin,pi
-from bposd.hgp import hgp
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
 
@@ -39,11 +38,11 @@ def proj_mat():
 def gen_h1(n):
     '''
     Generate the first classical code in 2D.
-    Polynomial: f(x, y) = 1 + x + y
-    Coordinate to index: (x, y) = (x * n + y)
+    Polynomial: f(x, y) = 1 + x^(-1) + y
+    Coordinate to index: (x, y) = (x * N + y)
     Parity-check relation:
     (x, y) -> {
-        x + 1, y
+        x - 1, y
         x, y + 1
     }
     Returns:
@@ -56,19 +55,18 @@ def gen_h1(n):
             h[idx, idx] = 1
             h[idx, coord2_to_idx(i-1, j, n)] = 1
             h[idx, coord2_to_idx(i, j+1, n)] = 1
-            #h[idx, coord2_to_idx(i+1, j+1, n)] = 1
     return h
 
 def gen_h2(n):
     '''
     Generate the second classical code in 3D.
-    Polynomial: f(x, y, z) = 1 + x + y + z
-    Coordinate to index: (x, y, z) = (x * n**2 + y * n + z)
+    Polynomial: f(x, y, z) = 1 + x + y^(-1) + z^(-1)
+    Coordinate to index: (x, y, z) = (x * N**2 + y * N + z)
     Parity-check relation:
     (x, y, z) -> {
         x + 1, y, z
-        x, y + 1, z
-        x, y, z + 1
+        x, y - 1, z
+        x, y, z - 1
     }
     Returns:
         np.array, shape=(3, n**3)
@@ -92,8 +90,8 @@ def gen_hgp(h1, h2):
     Returns:
         Hx and Hz
     '''
-    hgp_code = hgp(h1, h2)
-    hx, hz = hgp_code.hx, hgp_code.hz
+    hx = np.hstack((np.kron(h1,np.eye(h2.shape[1])),np.kron(np.eye(h1.shape[0]),h2.T)));
+    hz = np.hstack((np.kron(np.eye(h1.shape[1]),h2),np.kron(h1.T,np.eye(h2.shape[0]))));
     return hx, hz
 
 def coord5_to_ind(coords, n):
@@ -104,18 +102,20 @@ def coord5_to_ind(coords, n):
     Args:
         coords: np.array, shape=(5,)
     '''
+    N = 2*n+1
     x0, x1, x2, x3, x4 = coords
-    return ((x0+n) * (2*n+1) + (x1+n)) * (2*n+1)**3 + ((x2+n) * (2*n+1)**2 + (x3+n) * (2*n+1) + (x4+n))
+    return ((x0+n) * N + (x1+n)) * N**3 + ((x2+n) * N**2 + (x3+n) * N + (x4+n))
 
 def ind_to_coord5(ind, n):
     '''
     ind -> (x0, x1, x2, x3, x4)
     '''
-    x0 = (ind // (2*n+1)**3) // (2*n+1) - n;
-    x1 = (ind // (2*n+1)**3) % (2*n+1) - n;
-    x2 = (ind % (2*n+1)**3) // ((2*n+1)**2) - n;
-    x3 = ((ind % (2*n+1)**3) % (2*n+1)**2) // (2*n+1) - n;
-    x4 = ((ind % (2*n+1)**3) % (2*n+1)**2) % (2*n+1) - n;
+    N = 2*n+1
+    x0 = (ind // N**3) // N - n;
+    x1 = (ind // N**3) % N - n;
+    x2 = (ind % N**3) // (N**2) - n;
+    x3 = ((ind % N**3) % N**2) // N - n;
+    x4 = ((ind % N**3) % N**2) % N - n;
     return np.array([x0, x1, x2, x3, x4])
 
 def get_hx_vv_cc(hx, n):
@@ -205,9 +205,9 @@ if __name__ == '__main__':
     proj_pos = P[:2,:];
     proj_neg = P[2:,:];
     
-    R = special_ortho_group.rvs(5);
-    proj_pos = proj_pos @ R.T;
-    proj_neg = proj_neg @ R.T;
+    #R = special_ortho_group.rvs(5);
+    #proj_pos = proj_pos @ R.T;
+    #proj_neg = proj_neg @ R.T;
 
     h1 = gen_h1(n)
     h2 = gen_h2(n)
@@ -222,38 +222,13 @@ if __name__ == '__main__':
     np.save(f'{prefix}/penrose_p3/hz_vv_n={n}.npy', hz_vv)
     np.save(f'{prefix}/penrose_p3/hz_cc_n={n}.npy', hz_cc)
 
-    cut_pts, full_to_cut_ind_map, cut_to_full_ind_map = cut(lat_pts, voronoi, proj_neg)
+    cut_pts, full_to_cut_ind_map = cut(lat_pts, voronoi, proj_neg)
     print(cut_pts.shape);
     proj_pts = project(cut_pts, proj_pos)
     new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
     new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n)
     new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n)
     new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n)
-
-    """
-    new_hx = np.hstack((new_hx_vv, new_hx_cc))
-    new_hz = np.hstack((new_hz_vv, new_hz_cc))
-    h_ac = (new_hx @ new_hz.T) % 2;
-    print(h_ac);
-    for i in range(h_ac.shape[0]):
-        for j in range(h_ac.shape[1]):
-            if h_ac[i,j] != 0:
-                conflicts = np.argwhere(new_hx[i,:]+new_hz[j,:]==2)[:,0];
-                print(str(i)+' '+str(j)+' '+str(conflicts));
-                print(new_hx[i,:]);
-                print(new_hz[j,:]);
-                if(np.sum(new_hx[i,:]) > np.sum(new_hz[j,:])):
-                    #print(new_hx[i,conflicts]);
-                    new_hx[i,conflicts] = 0;
-                    #print(new_hx[i,conflicts]);
-                else:
-                    new_hz[j,conflicts] = 0;
-
-    new_hx_vv = new_hx[:,:new_hx_vv.shape[1]];
-    new_hx_cc = new_hx[:,new_hx_vv.shape[1]:];
-    new_hz_vv = new_hz[:,:new_hz_vv.shape[1]];
-    new_hz_cc = new_hz[:,new_hz_vv.shape[1]:];
-    """
 
     print(f'shape of proj_pts: {proj_pts.shape}')
     np.save(f'{prefix}/penrose_p3/proj_pts_n={n}.npy', proj_pts)
