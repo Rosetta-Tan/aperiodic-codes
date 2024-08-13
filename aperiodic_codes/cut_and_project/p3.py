@@ -5,6 +5,7 @@ H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
 import numpy as np
 from numpy import array,sqrt,cos,sin,pi
+from scipy.linalg import expm
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
 
@@ -195,6 +196,17 @@ def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc):
     #return np.all((hx @ hz.T) % 2 == 0) and np.all((hz @ hx.T) % 2 == 0)
     return np.sum((hx @ hz.T) % 2)
 
+def gen_rotation(thetas,d):
+    assert len(thetas) == (d*(d-1))//2, "Must provide d*(d-1)/2 angles";
+    T = np.zeros((d,d),dtype=float);
+    a = 0;
+    for i in range(d):
+        for j in range(i+1,d):
+            T[i,j] = thetas[a];
+            T[j,i] = -thetas[a];
+            a += 1;
+    return expm(T);
+
 if __name__ == '__main__':
     prefix = "/data/apc"
     n = 3;
@@ -207,21 +219,22 @@ if __name__ == '__main__':
     proj_neg = P[2:,:];
     
     # R = special_ortho_group.rvs(5);
-    # proj_pos = proj_pos @ R.T;
-    # proj_neg = proj_neg @ R.T;
+    R = gen_rotation((-0.1,0.4,0.8,0.0,0.1,0.0,0.0,0.1,0.2,0.4),5);
+    proj_pos = proj_pos @ R.T;
+    proj_neg = proj_neg @ R.T;
 
     h1 = gen_h1(n)
     h2 = gen_h2(n)
     hx, hz = gen_hgp(h1, h2)
-    np.save(f'{prefix}/penrose_p3/hx_n={n}.npy', hx)
-    np.save(f'{prefix}/penrose_p3/hz_n={n}.npy', hz)
+    #np.save(f'{prefix}/penrose_p3/hx_n={n}.npy', hx)
+    #np.save(f'{prefix}/penrose_p3/hz_n={n}.npy', hz)
 
     hx_vv, hx_cc = get_hx_vv_cc(hx, n)
     hz_vv, hz_cc = get_hz_vv_cc(hz, n)
-    np.save(f'{prefix}/penrose_p3/hx_vv_n={n}.npy', hx_vv)
-    np.save(f'{prefix}/penrose_p3/hx_cc_n={n}.npy', hx_cc)
-    np.save(f'{prefix}/penrose_p3/hz_vv_n={n}.npy', hz_vv)
-    np.save(f'{prefix}/penrose_p3/hz_cc_n={n}.npy', hz_cc)
+    #np.save(f'{prefix}/penrose_p3/hx_vv_n={n}.npy', hx_vv)
+    #np.save(f'{prefix}/penrose_p3/hx_cc_n={n}.npy', hx_cc)
+    #np.save(f'{prefix}/penrose_p3/hz_vv_n={n}.npy', hz_vv)
+    #np.save(f'{prefix}/penrose_p3/hz_cc_n={n}.npy', hz_cc)
 
     cut_pts, full_to_cut_ind_map = cut(lat_pts, voronoi, proj_neg,offset)
     print(cut_pts.shape);
