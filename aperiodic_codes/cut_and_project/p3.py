@@ -6,6 +6,7 @@ H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 import numpy as np
 from numpy import array,sqrt,cos,sin,pi
 from scipy.linalg import expm
+import scipy.sparse as sp
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
 
@@ -49,14 +50,15 @@ def gen_h1(n):
     Returns:
         np.array, shape=(2, n**2)
     '''
-    h = np.zeros(((2*n+1)**2, (2*n+1)**2), dtype=int)
+    row = [];
+    col = [];
     for i in range(-n,n+1):
         for j in range(-n,n+1):
-            idx = coord2_to_idx(i, j, n)
-            h[idx, idx] = 1
-            h[idx, coord2_to_idx(i-1, j, n)] = 1
-            h[idx, coord2_to_idx(i, j+1, n)] = 1
-    return h
+            idx = coord2_to_idx(i, j, n);
+            row.append(idx); col.append(idx);
+            row.append(idx); col.append(coord2_to_idx(i-1, j, n));
+            row.append(idx); col.append(coord2_to_idx(i, j+1, n));
+    return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**2,(2*n+1)**2)).tocsc();
 
 def gen_h2(n):
     '''
@@ -72,16 +74,17 @@ def gen_h2(n):
     Returns:
         np.array, shape=(3, n**3)
     '''
-    h = np.zeros(((2*n+1)**3, (2*n+1)**3), dtype=int)
+    row = [];
+    col = []; 
     for i in range(-n,n+1):
         for j in range(-n,n+1):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n)
-                h[idx, idx] = 1
-                h[idx, coord3_to_idx(i+1, j, k, n)] = 1
-                h[idx, coord3_to_idx(i, j-1, k, n)] = 1
-                h[idx, coord3_to_idx(i, j, k-1, n)] = 1
-    return h
+                row.append(idx); col.append(idx);
+                row.append(idx); col.append(coord3_to_idx(i+1, j, k, n));
+                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
+                row.append(idx); col.append(coord3_to_idx(i, j, k-1, n));
+    return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
     '''
@@ -91,8 +94,8 @@ def gen_hgp(h1, h2):
     Returns:
         Hx and Hz
     '''
-    hx = np.hstack((np.kron(h1,np.eye(h2.shape[1])),np.kron(np.eye(h1.shape[0]),h2.T)));
-    hz = np.hstack((np.kron(np.eye(h1.shape[1]),h2),np.kron(h1.T,np.eye(h2.shape[0]))));
+    hx = sp.hstack((sp.kron(h1,sp.eye(h2.shape[1])),sp.kron(sp.eye(h1.shape[0]),h2.T.tocsc()))).tocsc();
+    hz = sp.hstack((sp.kron(sp.eye(h1.shape[1]),h2),sp.kron(h1.T.tocsc(),sp.eye(h2.shape[0])))).tocsc();
     return hx, hz
 
 def coord5_to_ind(coords, n):
@@ -153,7 +156,7 @@ def get_neighbors(pt, parity_check_matrix, n):
     Get neighbors in 5D.
     '''
     ind = coord5_to_ind(pt, n)
-    neighbor_inds = np.where(parity_check_matrix[ind] == 1)[0]
+    neighbor_inds = np.where(parity_check_matrix[ind].todense().A1 == 1)[0]
     neighbors = [ind_to_coord5(neighbor_ind, n) 
                  for neighbor_ind in neighbor_inds]
     return neighbor_inds, neighbors
