@@ -1,7 +1,6 @@
 # 3D cut and project tiling
 import numpy as np
 from scipy.optimize import linprog
-#from scipy.spatial import ConvexHull
 
 def gen_lat(low, high, dim):
     '''
@@ -14,10 +13,8 @@ def gen_lat(low, high, dim):
         - ...
         - lat_pts[dim-1, :]: x_{dim-1} coordinates
     '''
-    lat_pts = np.array(
-            np.meshgrid(*([np.arange(low, high+1)] * dim), indexing='ij')
-        ).reshape(dim, -1)
-    return lat_pts
+    lat_pts = np.array(np.meshgrid(*([np.arange(low, high+1)]*dim),indexing='ij')).reshape(dim, -1)
+    return lat_pts.T
 
 def gen_voronoi(dim):
     '''
@@ -30,10 +27,8 @@ def gen_voronoi(dim):
         - ...
         - voronoi[:, 2**dim-1]: the last pt [0.5, 0.5, ..., 0.5, 0.5].T
     '''
-    voronoi = np.array(
-        np.meshgrid(*([[-0.5, 0.5]] * dim), indexing='ij')
-    ).reshape(dim, -1)
-    return voronoi
+    voronoi = np.array(np.meshgrid(*([[-0.5, 0.5]]*dim),indexing='ij')).reshape(dim, -1)
+    return voronoi.T
 
 def is_point_in_hull(points, x):
     n_points = len(points)
@@ -43,24 +38,7 @@ def is_point_in_hull(points, x):
     b = np.r_[x, np.ones(1)]
     lp = linprog(c, A_eq=A, b_eq=b)
     return lp.success
-'''
-def is_point_in_hull(point, hull, offset_vec=None):
-    # Function to check if a point is inside the convex hull
-    if offset_vec:
-        raise NotImplementedError('Offset vector not implemented')
-    # We add the homogeneous coordinate for the point
-    point = np.append(point, 1)
-    # Loop over each facet of the hull
-    for equation in hull.equations:
-        if offset_vec is None:
-            if np.dot(equation, point) > 0:
-                return False
-        else:
-            offset_3D = np.append(offset_3D, 0)
-            if np.dot(equation, (point-offset_3D)) > 0:
-                return False
-    return True
-'''
+
 def gen_proj_pos():
     '''
     Generate the projection matrix into the positive eigenvalue 3D subspace
@@ -92,7 +70,7 @@ def gen_proj_pos():
         np.sqrt(2)*sintheta*np.sin(8*np.pi/5),
         np.sqrt(2)*costheta
         ])
-    proj_pos = np.vstack([v1, v2, v3, v4, v5, v6]).T  # shape: (3, 6)
+    proj_pos = np.vstack([v1, v2, v3, v4, v5, v6])  # shape: (3, 6)
     
     return proj_pos
 
@@ -159,21 +137,22 @@ def cut(lat_pts, voronoi, proj, offset_vec=None):
         - cut_pts[5]: x5 coordinates
     '''
     if offset_vec is not None:
-        voronoi_shifted = voronoi + np.tile([offset_vec],(voronoi.shape[1],1)).T;
+        voronoi_shifted = voronoi + np.tile([offset_vec],(voronoi.shape[0],1));
     else:
         voronoi_shifted = voronoi;
 
-    window = (proj @ voronoi_shifted).T; 
+    window = voronoi_shifted @ proj;
  
     # Select lattice points inside the convex hull
     full_to_cut_ind_map = {}
     cut_pts = []
-    for i in range(lat_pts.shape[1]):
-        pt_proj = proj @ lat_pts[:, i]
+    proj_pts = lat_pts @ proj
+    for i in range(proj_pts.shape[0]):
+        pt_proj = proj_pts[i,:];
         if is_point_in_hull(window,pt_proj):
             full_to_cut_ind_map.update({i: len(cut_pts)})
-            cut_pts.append(lat_pts[:, i])
-    cut_pts = np.asarray(cut_pts).T # shape=(6, n_cut)
+            cut_pts.append(lat_pts[i,:])
+    cut_pts = np.asarray(cut_pts) # shape=(6, n_cut)
  
     return cut_pts, full_to_cut_ind_map
 
@@ -186,4 +165,4 @@ def project(cut_pts, proj):
     Returns:
         projected points: np.array, shape=(3, n_cut)
     '''
-    return proj @ cut_pts
+    return cut_pts @ proj

@@ -1,0 +1,4 @@
+#!/bin/sh
+rm -f cut_multi
+g++ -m64 -std=c++20 cut_multi.cc cnpy.cpp -o cut_multi -I/usr/local/include/highs -L/usr/local/lib64 -Wl,-rpath /usr/local/lib64 -lpthread -lm -lz -ldl -lhighs -O4 -Wall -Wno-unused-variable -Wno-unused-but-set-variable
+
