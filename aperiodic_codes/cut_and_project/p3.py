@@ -3,12 +3,15 @@ Construct a pair of X and Z parity-check matrices on 3D cut-and-project tiling
 from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
+from os import getpid
+from subprocess import run
 import numpy as np
 from numpy import array,sqrt,cos,sin,pi
 from scipy.linalg import expm
 import scipy.sparse as sp
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
+from aperiodic_codes.cut_and_project.code_param_utils import *
 
 def symmod(x,n):
     return (x+n)%(2*n+1)-n;
@@ -35,7 +38,7 @@ def proj_mat():
                   [   sin(0), sin(2*pi/5), sin(4*pi/5),  sin(6*pi/5),  sin(8*pi/5)],
                   [   cos(0), cos(4*pi/5), cos(8*pi/5), cos(12*pi/5), cos(16*pi/5)],
                   [   sin(0), sin(4*pi/5), sin(8*pi/5), sin(12*pi/5), sin(16*pi/5)],
-                  [1/sqrt(2),   1/sqrt(2),   1/sqrt(2),    1/sqrt(2),    1/sqrt(2)]])*sqrt(2/5);
+                  [1/sqrt(2),   1/sqrt(2),   1/sqrt(2),    1/sqrt(2),    1/sqrt(2)]]).T*sqrt(2/5);
 
 def gen_h1(n):
     '''
@@ -55,9 +58,12 @@ def gen_h1(n):
     for i in range(-n,n+1):
         for j in range(-n,n+1):
             idx = coord2_to_idx(i, j, n);
-            row.append(idx); col.append(idx);
+            #row.append(idx); col.append(idx);
+            row.append(idx); col.append(coord2_to_idx(i+1, j, n));
             row.append(idx); col.append(coord2_to_idx(i-1, j, n));
             row.append(idx); col.append(coord2_to_idx(i, j+1, n));
+            row.append(idx); col.append(coord2_to_idx(i, j-1, n));
+            #row.append(idx); col.append(coord2_to_idx(i+1, j-1, n));
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**2,(2*n+1)**2)).tocsc();
 
 def gen_h2(n):
@@ -80,10 +86,14 @@ def gen_h2(n):
         for j in range(-n,n+1):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n)
-                row.append(idx); col.append(idx);
+                #row.append(idx); col.append(idx);
                 row.append(idx); col.append(coord3_to_idx(i+1, j, k, n));
+                row.append(idx); col.append(coord3_to_idx(i-1, j, k, n));
+                row.append(idx); col.append(coord3_to_idx(i, j+1, k, n));
                 row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
+                row.append(idx); col.append(coord3_to_idx(i, j, k+1, n));
                 row.append(idx); col.append(coord3_to_idx(i, j, k-1, n));
+                #row.append(idx); col.append(coord3_to_idx(i-1, j+1, k+1, n));
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -120,7 +130,7 @@ def ind_to_coord5(ind, n):
     x2 = (ind % N**3) // (N**2) - n;
     x3 = ((ind % N**3) % N**2) // N - n;
     x4 = ((ind % N**3) % N**2) % N - n;
-    return np.array([x0, x1, x2, x3, x4])
+    return array([x0, x1, x2, x3, x4])
 
 def get_hx_vv_cc(hx, n):
     '''
@@ -157,8 +167,7 @@ def get_neighbors(pt, parity_check_matrix, n):
     '''
     ind = coord5_to_ind(pt, n)
     neighbor_inds = np.where(parity_check_matrix[ind].todense().A1 == 1)[0]
-    neighbors = [ind_to_coord5(neighbor_ind, n) 
-                 for neighbor_ind in neighbor_inds]
+    neighbors = [ind_to_coord5(neighbor_ind, n) for neighbor_ind in neighbor_inds]
     return neighbor_inds, neighbors
 
 def gen_new_pc_matrix(cut_pts,
@@ -169,24 +178,18 @@ def gen_new_pc_matrix(cut_pts,
     new_parity_check_matrix will contain all-zero rows,
     purge after combining CC and VV type
     '''
-    n_cut = cut_pts.shape[1]
+    n_cut = cut_pts.shape[0]
     new_parity_check_matrix = np.zeros((n_cut, n_cut), dtype=int)
+    
     # Connect neighboring points in cut_pts
     for i_cut in range(n_cut):
-        cut_pt = cut_pts[:, i_cut]
-        neighbor_inds, _ = get_neighbors(cut_pt, 
-                                        original_parity_check_matrix, n)
-        # Check if all neighbors are inside the convex hull
-        all_neighbors_in_hull = True
-        #for i_full_neighbor in neighbor_inds:
-        #    if i_full_neighbor not in full_to_cut_ind_map:
-        #        all_neighbors_in_hull = False
-    
-        if all_neighbors_in_hull:
-            for i_full_neighbor in neighbor_inds:
-                if i_full_neighbor in full_to_cut_ind_map:
-                    i_cut_neighbor = full_to_cut_ind_map[i_full_neighbor]
-                    new_parity_check_matrix[i_cut, i_cut_neighbor] = 1
+        cut_pt = cut_pts[i_cut,:]
+        neighbor_inds, _ = get_neighbors(cut_pt, original_parity_check_matrix, n)
+        for i_full_neighbor in neighbor_inds:
+            if i_full_neighbor in full_to_cut_ind_map:
+                i_cut_neighbor = full_to_cut_ind_map[i_full_neighbor]
+                new_parity_check_matrix[i_cut, i_cut_neighbor] = 1
+            
     return new_parity_check_matrix
 
 def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc):
@@ -196,7 +199,6 @@ def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc):
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    #return np.all((hx @ hz.T) % 2 == 0) and np.all((hz @ hx.T) % 2 == 0)
     return np.sum((hx @ hz.T) % 2)
 
 def gen_rotation(thetas,d):
@@ -210,37 +212,45 @@ def gen_rotation(thetas,d):
             a += 1;
     return expm(T);
 
+def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
+    orth_pts = lat_pts @ proj_neg;
+    orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
+    np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
+    run(f'cut_multi {f_base} {nTh}',shell=True); 
+    cut_inds = np.load(f'{f_base}_ind.npy');
+    run(f'rm {f_base}*',shell=True);
+    
+    return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
+
 if __name__ == '__main__':
     prefix = "/data/apc"
+    pid = getpid();
+    f_base = f'{prefix}/penrose_p3/{pid}';
+    nTh = 4;
     n = 3;
+
     lat_pts = gen_lat(low=-n, high=n, dim=5)
-    assert lat_pts.shape[1] == (2*n+1)**5, 'Number of lattice points should be n**5'
+    assert lat_pts.shape[0] == (2*n+1)**5, 'Number of lattice points should be n**5'
     voronoi = gen_voronoi(dim=5)
-    offset = np.array([1,1,1,1,1])/4;
+    offset = array([0,0,0,0,0]);
     P = proj_mat();
-    proj_pos = P[:2,:];
-    proj_neg = P[2:,:];
+    proj_pos = P[:,:2];
+    proj_neg = P[:,2:];
     
-    # R = special_ortho_group.rvs(5);
-    R = gen_rotation((-0.1,0.4,0.8,0.0,0.1,0.0,0.0,0.1,0.2,0.4),5);
-    proj_pos = proj_pos @ R.T;
-    proj_neg = proj_neg @ R.T;
+    #R = gen_rotation((-3*pi/30,pi/30,2*pi/30,7*pi/30,3*pi/30,5*pi/30,3*pi/30,0.0,6*pi/30,4*pi/30),5);
+    R = special_ortho_group.rvs(5);
+    proj_pos = R @ proj_pos;
+    proj_neg = R @ proj_neg;
 
     h1 = gen_h1(n)
     h2 = gen_h2(n)
     hx, hz = gen_hgp(h1, h2)
-    #np.save(f'{prefix}/penrose_p3/hx_n={n}.npy', hx)
-    #np.save(f'{prefix}/penrose_p3/hz_n={n}.npy', hz)
 
     hx_vv, hx_cc = get_hx_vv_cc(hx, n)
     hz_vv, hz_cc = get_hz_vv_cc(hz, n)
-    #np.save(f'{prefix}/penrose_p3/hx_vv_n={n}.npy', hx_vv)
-    #np.save(f'{prefix}/penrose_p3/hx_cc_n={n}.npy', hx_cc)
-    #np.save(f'{prefix}/penrose_p3/hz_vv_n={n}.npy', hz_vv)
-    #np.save(f'{prefix}/penrose_p3/hz_cc_n={n}.npy', hz_cc)
 
-    cut_pts, full_to_cut_ind_map = cut(lat_pts, voronoi, proj_neg,offset)
-    print(cut_pts.shape);
+    cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
+    cut_pts = lat_pts[cut_ind,:];
     proj_pts = project(cut_pts, proj_pos)
     new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
     new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n)
@@ -248,11 +258,10 @@ if __name__ == '__main__':
     new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n)
 
     print(f'shape of proj_pts: {proj_pts.shape}')
-    np.save(f'{prefix}/penrose_p3/proj_pts_n={n}.npy', proj_pts)
-    np.save(f'{prefix}/penrose_p3/new_hx_vv_n={n}.npy', new_hx_vv)
-    np.save(f'{prefix}/penrose_p3/new_hx_cc_n={n}.npy', new_hx_cc)
-    np.save(f'{prefix}/penrose_p3/new_hz_vv_n={n}.npy', new_hz_vv)
-    np.save(f'{prefix}/penrose_p3/new_hz_cc_n={n}.npy', new_hz_cc)
+    np.savez(f'{f_base}.npz', proj_pts=proj_pts,
+             new_hx_vv=hx_vv,new_hx_cc=hx_cc,new_hz_vv=hz_vv,new_hz_cc=hz_cc);
 
     # Check commutation
-    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc))
+    print(check_comm_after_proj(new_hx_vv[bulk,bulk], new_hx_cc[bulk,bulk], new_hz_vv[bulk,bulk], new_hz_cc[bulk,bulk]))
+    #print(get_classical_code_distance_time_limit(np.hstack((new_hx_cc,new_hx_vv)),10));
+    #print(get_classical_code_distance_time_limit(np.hstack((new_hz_cc,new_hz_vv)),10)); 
