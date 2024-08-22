@@ -214,6 +214,7 @@ def gen_rotation(thetas,d):
     return expm(T);
 
 def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
+    # nTh is the number of threads
     orth_pts = lat_pts @ proj_neg
     orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T 
     np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window)
@@ -229,6 +230,9 @@ if __name__ == '__main__':
     f_base = f'{prefix}/penrose_p3/{pid}';
     nTh = 4;
     n = 3;
+
+    if not os.path.exists(f'{prefix}/penrose_p3'):
+        os.makedirs(f'{prefix}/penrose_p3')
 
     lat_pts = gen_lat(low=-n, high=n, dim=5)
     assert lat_pts.shape[0] == (2*n+1)**5, 'Number of lattice points should be n**5'
