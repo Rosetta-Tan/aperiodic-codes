@@ -205,19 +205,23 @@ def gen_rotation(thetas,d):
     return expm(T);
 
 def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
+    from config import executable
     orth_pts = lat_pts @ proj_neg;
     orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
     np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'cut_multi {f_base} {nTh}',shell=True); 
+    run(f'{executable} {f_base} {nTh}',shell=True); 
     cut_inds = np.load(f'{f_base}_ind.npy');
     run(f'rm {f_base}*',shell=True);
     
     return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
 
 if __name__ == '__main__':
-    prefix = "/data/apc"
+    from config import prefix
+    import os
     pid = getpid();
-    f_base = f'{prefix}/6d_to_3d/{pid}';
+    if not os.path.exists(f'{prefix}/6d_to_3d'):
+        os.makedirs(f'{prefix}/6d_to_3d')
+    f_base = f'{prefix}/6d_to_3d/{pid}'
     nTh = 4;
     n = 4;
 
