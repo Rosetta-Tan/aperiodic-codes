@@ -3,6 +3,7 @@ Construct a pair of X and Z parity-check matrices on 3D cut-and-project tiling
 from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
+import os
 from os import getpid
 from subprocess import run
 import numpy as np
@@ -213,17 +214,17 @@ def gen_rotation(thetas,d):
     return expm(T);
 
 def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
-    orth_pts = lat_pts @ proj_neg;
-    orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
-    np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'cut_multi {f_base} {nTh}',shell=True); 
-    cut_inds = np.load(f'{f_base}_ind.npy');
-    run(f'rm {f_base}*',shell=True);
+    orth_pts = lat_pts @ proj_neg
+    orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T 
+    np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window)
+    run(f'./cut_multi {f_base} {nTh}',shell=True)
+    cut_inds = np.load(f'{f_base}_ind.npy')
+    run(f'rm {f_base}*',shell=True)
     
-    return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
+    return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))}
 
 if __name__ == '__main__':
-    prefix = "/data/apc"
+    prefix = "../../data/apc"
     pid = getpid();
     f_base = f'{prefix}/penrose_p3/{pid}';
     nTh = 4;
@@ -262,6 +263,6 @@ if __name__ == '__main__':
              new_hx_vv=hx_vv,new_hx_cc=hx_cc,new_hz_vv=hz_vv,new_hz_cc=hz_cc);
 
     # Check commutation
-    print(check_comm_after_proj(new_hx_vv[bulk,bulk], new_hx_cc[bulk,bulk], new_hz_vv[bulk,bulk], new_hz_cc[bulk,bulk]))
+    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc))
     #print(get_classical_code_distance_time_limit(np.hstack((new_hx_cc,new_hx_vv)),10));
     #print(get_classical_code_distance_time_limit(np.hstack((new_hz_cc,new_hz_vv)),10)); 
