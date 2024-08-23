@@ -264,14 +264,13 @@ if __name__ == '__main__':
             new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n);
             new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
-            n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc,
-                                           new_hz_vv, new_hz_cc, cut_bulk);
+            n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc, cut_bulk);
             prop_energy = n_anti/len(cut_bulk);
             acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
             if(rng.random() < acc_prob):
                 if(prop_energy < cur_energy):
-                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,
+                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
                              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
                     
                 cur_angles = prop_angles;
