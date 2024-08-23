@@ -244,7 +244,7 @@ if __name__ == '__main__':
 
     # Start from random rotation, offset
     cur_angles = rng.uniform(0.0,2*pi,nA).tolist();
-    prop_angles = cur_angles;
+    prop_angles = cur_angles.copy();
     R = gen_rotation(cur_angles,6);
     offset = rng.uniform(0.0,1.0,6);
 
@@ -273,7 +273,7 @@ if __name__ == '__main__':
                     np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
                              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
                     
-                cur_angles = prop_angles;
+                cur_angles = prop_angles.copy();
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
                 f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},True\n');
@@ -290,6 +290,6 @@ if __name__ == '__main__':
                 break;
 
         # Generate proposed cut
-        prop_angles = cur_angles;
+        prop_angles = cur_angles.copy();
         prop_angles[rng.integers(0,nA,1)[0]] += rng.normal(0.0,0.1);
         R = gen_rotation(prop_angles,6);
