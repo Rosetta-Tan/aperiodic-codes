@@ -204,11 +204,10 @@ def gen_rotation(thetas,d):
     return expm(T);
 
 def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
-    from config import executable
     orth_pts = lat_pts @ proj_neg;
     orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
     np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'{executable} {f_base} {nTh}',shell=True); 
+    run(f'cut_multi {f_base} {nTh}',shell=True); 
     cut_inds = np.load(f'{f_base}_ind.npy');
     run(f'rm {f_base}_cut.npz',shell=True);
     run(f'rm {f_base}_ind.npy',shell=True);
@@ -216,7 +215,7 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
     return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
 
 if __name__ == '__main__':
-    prefix = "../../data/apc"
+    prefix = "/data/apc"
     pid = getpid();
     f_base = f'{prefix}/6d_to_3d/{pid}';
     nTh = 8;
@@ -241,7 +240,7 @@ if __name__ == '__main__':
     # Setup RNG and MC params
     rng = np.random.default_rng(pid);
     nA = 6*5//2;
-    beta = 20.0;
+    beta = 30.0;
     cur_angles = [0.0]*nA;
     prop_angles = cur_angles;
 
@@ -278,14 +277,14 @@ if __name__ == '__main__':
                 cur_angles = prop_angles;
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
-                f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},1\n');
+                f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},True\n');
                 f.close();
             else:
                 f = open(f'{f_base}.log','a');
-                f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},0\n');
+                f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},False\n');
                 f.close();
             
-            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,
+            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
                      hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
             if(n_anti == 0):
