@@ -1,0 +1,42 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>3D Viewer</title>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+        <style>
+            canvas {
+                width: 65%;
+                height: 65%;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="renderCanvas"></canvas>
+        <script>
+            var canvas = document.getElementById("renderCanvas");
+            var engine = new BABYLON.Engine(canvas, true);
+            var createScene = function() {
+                var scene = new BABYLON.Scene(engine);
+                var camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 2, 2, BABYLON.Vector3.Zero(), scene);
+                camera.attachControl(canvas, true);
+                var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+                var gltf = BABYLON.SceneLoader.Append("", "output.gltf", scene, function() {
+                    scene.createDefaultCameraOrLight(true);
+                    scene.createDefaultEnvironment();
+                    scene.activeCamera.alpha += Math.PI;
+                });
+                return scene;
+            };
+            var scene = createScene();
+            engine.runRenderLoop(function() {
+                scene.render();
+            });
+            window.addEventListener("resize", function() {
+                engine.resize();
+            });
+        </script>
+    </body>
+    </html>
+    
