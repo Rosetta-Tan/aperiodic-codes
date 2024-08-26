@@ -82,8 +82,8 @@ def gen_h2(n):
                 idx = coord3_to_idx(i, j, k, n)
                 row.append(idx); col.append(idx);
                 row.append(idx); col.append(coord3_to_idx(i+1, j, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j+1, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j, k+1, n));
+                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
+                row.append(idx); col.append(coord3_to_idx(i, j, k-1, n));
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -226,7 +226,6 @@ if __name__ == '__main__':
     assert lat_pts.shape[0] == (2*n+1)**6, 'Number of lattice points should be N**6'
     voronoi = gen_voronoi(dim=6);
     bulk = np.all(abs(lat_pts) != n,axis=1);
-    offset = array([0,0,0,0,0,0]);
     P = proj_mat();
     proj_pos = P[:,:3];
     proj_neg = P[:,3:];
@@ -241,12 +240,13 @@ if __name__ == '__main__':
     rng = np.random.default_rng(pid);
     nA = 6*5//2;
     beta = 30.0;
-    cur_angles = [0.0]*nA;
-    prop_angles = cur_angles;
+    cur_energy = 10.0;
 
-    # Start from trivial rotation 
+    # Start from random rotation, offset
+    cur_angles = rng.uniform(0.0,2*pi,nA).tolist();
+    prop_angles = cur_angles.copy();
     R = gen_rotation(cur_angles,6);
-    cur_energy = 100;
+    offset = rng.uniform(0.0,1.0,6);
 
     while(True):
         # Try proposed cut
@@ -264,17 +264,16 @@ if __name__ == '__main__':
             new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n);
             new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
-            n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc,
-                                           new_hz_vv, new_hz_cc, cut_bulk);
+            n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc, cut_bulk);
             prop_energy = n_anti/len(cut_bulk);
             acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
             if(rng.random() < acc_prob):
                 if(prop_energy < cur_energy):
-                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,
+                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
                              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
                     
-                cur_angles = prop_angles;
+                cur_angles = prop_angles.copy();
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
                 f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},True\n');
@@ -291,6 +290,6 @@ if __name__ == '__main__':
                 break;
 
         # Generate proposed cut
-        prop_angles = cur_angles;
+        prop_angles = cur_angles.copy();
         prop_angles[rng.integers(0,nA,1)[0]] += rng.normal(0.0,0.1);
         R = gen_rotation(prop_angles,6);

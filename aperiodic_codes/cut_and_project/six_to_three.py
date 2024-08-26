@@ -217,13 +217,10 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
 
 if __name__ == '__main__':
     from config import prefix
-    import os
     pid = getpid();
-    if not os.path.exists(f'{prefix}/6d_to_3d'):
-        os.makedirs(f'{prefix}/6d_to_3d')
-    f_base = f'{prefix}/6d_to_3d/{pid}'
-    nTh = 4;
-    n = 4;
+    f_base = f'{prefix}/6d_to_3d/{pid}';
+    nTh = 8;
+    n = 3;
 
     lat_pts = gen_lat(low=-n, high=n, dim=6)
     assert lat_pts.shape[0] == (2*n+1)**6, 'Number of lattice points should be N**6'
@@ -234,7 +231,12 @@ if __name__ == '__main__':
     proj_neg = P[:,3:];
     
     #R = gen_rotation((-3*pi/30,pi/30,2*pi/30,7*pi/30,3*pi/30,5*pi/30,3*pi/30,0.0,6*pi/30,4*pi/30),5);
-    R = special_ortho_group.rvs(6);
+    # R = special_ortho_group.rvs(6);
+    R = gen_rotation((6.406953430308097, 5.349274542356475, 0.6822133844997569,
+                      0.5974713336012304, 1.3252537411849554, 0.912736410967225,
+                      3.8448421914141266, 5.893658087392231, 1.3755798562976995,
+                      1.4273007225028496, 2.0568879800919, 6.228337204298493,
+                      2.4722791967308706, 1.5754352568017014, 0.4294626881179672), 6)
     proj_pos = R @ proj_pos;
     proj_neg = R @ proj_neg;
 
@@ -248,13 +250,15 @@ if __name__ == '__main__':
     cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
     cut_pts = lat_pts[cut_ind,:];
     proj_pts = project(cut_pts, proj_pos)
+    bulk = np.all(abs(lat_pts) != n,axis=1)
+    cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]]
     new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
     new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n)
     new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n)
     new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n)
 
     print(f'shape of proj_pts: {proj_pts.shape}')
-    np.savez(f'{f_base}.npz', proj_pts=proj_pts,
+    np.savez(f'{f_base}.npz', proj_pts=proj_pts, cut_bulk=cut_bulk,
              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
     # Check commutation
