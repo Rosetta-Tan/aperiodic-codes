@@ -7,10 +7,10 @@ else
     CXX = g++
 endif
 
-all: cut_multi
+all: clean cut_multi
 
 cut_multi: cut_multi.cc cnpy.cpp
-	$(CXX) -m64 $(CXXFLAGS) $^ -o $@ -I/usr/local/include/highs -L/usr/local/lib64 -Wl,-rpath /usr/local/lib64 $(LDFLAGS)
+	$(CXX) -m64 $(CXXFLAGS) $^ -o $@ -I/usr/local/include/highs -L/usr/local/lib -Wl,-rpath /usr/local/lib $(LDFLAGS)
 
 clean:
 	rm -f cut_multi
