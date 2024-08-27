@@ -5,6 +5,8 @@ H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
 from os import getpid
 from subprocess import run
+import logging
+import pickle
 import numpy as np
 from numpy import array,sqrt,cos,sin,pi
 from scipy.linalg import expm
@@ -12,6 +14,8 @@ import scipy.sparse as sp
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
 from aperiodic_codes.cut_and_project.code_param_utils import *
+
+logging.basicConfig(level=logging.INFO)
 
 def symmod(x,n):
     return (x+n)%(2*n+1)-n;
@@ -249,15 +253,19 @@ if __name__ == '__main__':
     proj_pts = project(cut_pts, proj_pos)
     bulk = np.all(abs(lat_pts) != n,axis=1)
     cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]]
+    logging.debug(f'cut_bulk: {cut_bulk}')
     new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
     new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n)
     new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n)
     new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n)
 
     print(f'shape of proj_pts: {proj_pts.shape}')
-    np.savez(f'{f_base}.npz', proj_pts=proj_pts, cut_bulk=cut_bulk,
+    np.savez(f'{f_base}.npz', proj_pts=proj_pts, cut_bulk=cut_bulk, offset=offset,
              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
-
+    np.save(f'{f_base}_cut_ind.npy', cut_ind)
+    with open(f'{f_base}_map.pkl', 'wb') as f:
+        pickle.dump(full_to_cut_ind_map, f)
+        
     # Check commutation
     print(f'n_bulk: {len(cut_bulk)}')
     print(f'n_anti: {check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc, cut_bulk)}')
