@@ -204,10 +204,11 @@ def gen_rotation(thetas,d):
     return expm(T);
 
 def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
+    from config import executable
     orth_pts = lat_pts @ proj_neg;
     orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
     np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'cut_multi {f_base} {nTh}',shell=True); 
+    run(f'{executable} {f_base} {nTh}',shell=True); 
     cut_inds = np.load(f'{f_base}_ind.npy');
     run(f'rm {f_base}_cut.npz',shell=True);
     run(f'rm {f_base}_ind.npy',shell=True);
@@ -215,8 +216,9 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
     return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
 
 if __name__ == '__main__':
-    prefix = "/data/apc"
-    pid = getpid();
+    prefix = "../../data/apc"
+    from config import tests
+    pid = int(list(tests.keys())[0])
     f_base = f'{prefix}/6d_to_3d/{pid}';
     nTh = 8;
     n = 3;
@@ -270,7 +272,7 @@ if __name__ == '__main__':
 
             if(rng.random() < acc_prob):
                 if(prop_energy < cur_energy):
-                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
+                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,offset=offset,
                              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
                     
                 cur_angles = prop_angles.copy();
@@ -283,7 +285,7 @@ if __name__ == '__main__':
                 f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},False\n');
                 f.close();
             
-            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
+            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,offset=offset,
                      hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
             if(n_anti == 0):
