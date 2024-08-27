@@ -83,8 +83,8 @@ def gen_h2(n):
                 idx = coord3_to_idx(i, j, k, n)
                 row.append(idx); col.append(idx);
                 row.append(idx); col.append(coord3_to_idx(i+1, j, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j+1, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j, k+1, n));
+                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
+                row.append(idx); col.append(coord3_to_idx(i, j, k-1, n));
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -184,14 +184,14 @@ def gen_new_pc_matrix(cut_pts,
             
     return new_parity_check_matrix
 
-def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc):
+def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk):
     '''
     Check commutation of all pairs of stabilizers.
     '''
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return np.sum((hx @ hz.T) % 2)
+    return np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2)
 
 def gen_rotation(thetas,d):
     assert len(thetas) == (d*(d-1))//2, "Must provide d*(d-1)/2 angles";
@@ -216,8 +216,8 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
     return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
 
 if __name__ == '__main__':
-    from config import prefix
-    pid = getpid();
+    from config import prefix, tests
+    pid = list(tests.keys())[2]
     f_base = f'{prefix}/6d_to_3d/{pid}';
     nTh = 8;
     n = 3;
@@ -225,18 +225,15 @@ if __name__ == '__main__':
     lat_pts = gen_lat(low=-n, high=n, dim=6)
     assert lat_pts.shape[0] == (2*n+1)**6, 'Number of lattice points should be N**6'
     voronoi = gen_voronoi(dim=6)
-    offset = array([0,0,0,0,0,0]);
+    offset = array(tests[str(pid)]["offset"])
     P = proj_mat();
     proj_pos = P[:,:3];
     proj_neg = P[:,3:];
     
     #R = gen_rotation((-3*pi/30,pi/30,2*pi/30,7*pi/30,3*pi/30,5*pi/30,3*pi/30,0.0,6*pi/30,4*pi/30),5);
     # R = special_ortho_group.rvs(6);
-    R = gen_rotation((6.406953430308097, 5.349274542356475, 0.6822133844997569,
-                      0.5974713336012304, 1.3252537411849554, 0.912736410967225,
-                      3.8448421914141266, 5.893658087392231, 1.3755798562976995,
-                      1.4273007225028496, 2.0568879800919, 6.228337204298493,
-                      2.4722791967308706, 1.5754352568017014, 0.4294626881179672), 6)
+    thetas = tests[str(pid)]["thetas"]
+    R = gen_rotation(thetas, 6)
     proj_pos = R @ proj_pos;
     proj_neg = R @ proj_neg;
 
@@ -262,6 +259,7 @@ if __name__ == '__main__':
              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
     # Check commutation
-    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc))
+    print(f'n_bulk: {len(cut_bulk)}')
+    print(f'n_anti: {check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc, cut_bulk)}')
     #print(get_classical_code_distance_time_limit(np.hstack((new_hx_cc,new_hx_vv)),10));
     #print(get_classical_code_distance_time_limit(np.hstack((new_hz_cc,new_hz_vv)),10)); 
