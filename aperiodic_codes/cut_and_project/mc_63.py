@@ -227,8 +227,8 @@ if __name__ == '__main__':
     voronoi = gen_voronoi(dim=6);
     bulk = np.all(abs(lat_pts) != n,axis=1);
     P = proj_mat();
-    proj_pos = P[:,:3];
-    proj_neg = P[:,3:];
+    proj_pos_base = P[:,:3];
+    proj_neg_base = P[:,3:];
 
     h1 = gen_h1(n);
     h2 = gen_h2(n);
@@ -250,8 +250,8 @@ if __name__ == '__main__':
 
     while(True):
         # Try proposed cut
-        proj_pos = R @ proj_pos;
-        proj_neg = R @ proj_neg;
+        proj_pos = R @ proj_pos_base;
+        proj_neg = R @ proj_neg_base;
 
         cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
         cut_pts = lat_pts[cut_ind,:];
@@ -276,11 +276,11 @@ if __name__ == '__main__':
                 cur_angles = prop_angles.copy();
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
-                f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},True\n');
+                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_bulk)},True\n');
                 f.close();
             else:
                 f = open(f'{f_base}.log','a');
-                f.write(f'{prop_angles},{n_anti},{len(cut_bulk)},False\n');
+                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_bulk)},False\n');
                 f.close();
             
             np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,

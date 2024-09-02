@@ -83,8 +83,8 @@ def gen_h2(n):
                 idx = coord3_to_idx(i, j, k, n)
                 row.append(idx); col.append(idx);
                 row.append(idx); col.append(coord3_to_idx(i+1, j, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j+1, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j, k+1, n));
+                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
+                row.append(idx); col.append(coord3_to_idx(i, j, k-1, n));
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -184,14 +184,14 @@ def gen_new_pc_matrix(cut_pts,
             
     return new_parity_check_matrix
 
-def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc):
+def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk):
     '''
     Check commutation of all pairs of stabilizers.
     '''
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return np.sum((hx @ hz.T) % 2)
+    return np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2)
 
 def gen_rotation(thetas,d):
     assert len(thetas) == (d*(d-1))//2, "Must provide d*(d-1)/2 angles";
@@ -210,7 +210,8 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
     np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
     run(f'cut_multi {f_base} {nTh}',shell=True); 
     cut_inds = np.load(f'{f_base}_ind.npy');
-    run(f'rm {f_base}*',shell=True);
+    run(f'rm {f_base}_cut.npz',shell=True);
+    run(f'rm {f_base}_ind.npy',shell=True);
     
     return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
 
@@ -218,42 +219,44 @@ if __name__ == '__main__':
     prefix = "/data/apc"
     pid = getpid();
     f_base = f'{prefix}/6d_to_3d/{pid}';
-    nTh = 4;
+    nTh = 8;
     n = 4;
 
+    # Generate 6d lattice objects
     lat_pts = gen_lat(low=-n, high=n, dim=6)
     assert lat_pts.shape[0] == (2*n+1)**6, 'Number of lattice points should be N**6'
-    voronoi = gen_voronoi(dim=6)
-    offset = array([0,0,0,0,0,0]);
+    voronoi = gen_voronoi(dim=6);
+    bulk = np.all(abs(lat_pts) != n,axis=1);
     P = proj_mat();
     proj_pos = P[:,:3];
     proj_neg = P[:,3:];
     
-    #R = gen_rotation((-3*pi/30,pi/30,2*pi/30,7*pi/30,3*pi/30,5*pi/30,3*pi/30,0.0,6*pi/30,4*pi/30),5);
-    R = special_ortho_group.rvs(6);
-    proj_pos = R @ proj_pos;
-    proj_neg = R @ proj_neg;
-
     h1 = gen_h1(n)
     h2 = gen_h2(n)
     hx, hz = gen_hgp(h1, h2)
-
     hx_vv, hx_cc = get_hx_vv_cc(hx, n)
     hz_vv, hz_cc = get_hz_vv_cc(hz, n)
+
+    offset = array([0.4079719930968392, 0.997937600200803, 0.3769633726733579, 0.6700701124709246, 0.5488023718269116, 0.9545779305572899]);
+    R = gen_rotation([0.406693597447301, 0.8557064391672391, -0.7054012685494304, 0.5583263039701757, -1.0453097847710786, 0.20928181721551956, -0.22542659030910867, 0.8305164272826089, 0.16508525565279075, 1.092820496097184, -1.0946197986847281, 0.12839419181590464, 0.9108660127040361, 1.4291079650666494, -1.0219329747515193],6);
+    proj_pos = R @ proj_pos;
+    proj_neg = R @ proj_neg;
 
     cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
     cut_pts = lat_pts[cut_ind,:];
     proj_pts = project(cut_pts, proj_pos)
+    cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]];
+
     new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
     new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n)
     new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n)
     new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n)
 
     print(f'shape of proj_pts: {proj_pts.shape}')
-    np.savez(f'{f_base}.npz', proj_pts=proj_pts,
+    np.savez(f'{f_base}.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
     # Check commutation
-    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc))
+    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc,cut_bulk))
     #print(get_classical_code_distance_time_limit(np.hstack((new_hx_cc,new_hx_vv)),10));
     #print(get_classical_code_distance_time_limit(np.hstack((new_hz_cc,new_hz_vv)),10)); 
