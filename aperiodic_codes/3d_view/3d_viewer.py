@@ -13,16 +13,20 @@ def load_npz(inpath):
     hx_cc = data['hx_cc']
     hz_vv = data['hz_vv']
     hz_cc = data['hz_cc']
-    return proj_pts, hx_vv, hx_cc, hz_vv, hz_cc
+    cut_bulk = data['cut_bulk']
+    return proj_pts, hx_vv, hx_cc, hz_vv, hz_cc, cut_bulk
 
-def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc):
+def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc, cut_bulk=None):
     '''
     Check commutation of all pairs of stabilizers.
     '''
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return (hx @ hz.T) % 2
+    if cut_bulk is None:
+        return (hx @ hz.T) % 2
+    else:
+        return (hx @ hz.T)[np.ix_(cut_bulk, cut_bulk)] % 2
 
 def npz_to_gltf(proj_pts,
                 hx_vv,
@@ -55,6 +59,9 @@ def npz_to_gltf(proj_pts,
                 line_vertices_red.extend(proj_pts[i])
                 line_vertices_red.extend(proj_pts[j])
 
+    faces = []
+
+
     line_vertices = np.array(line_vertices, dtype=np.float32).flatten()
     line_vertices_red = np.array(line_vertices_red, dtype=np.float32).flatten()
 
@@ -83,6 +90,7 @@ def npz_to_gltf(proj_pts,
     mesh = Mesh(primitives=[Primitive(attributes=Attributes(POSITION=0), mode=0)])
     mesh_lines = Mesh(primitives=[Primitive(attributes=Attributes(POSITION=1), mode=1)])
     mesh_lines_red = Mesh(primitives=[Primitive(attributes=Attributes(POSITION=2), mode=1, material=0)])
+    mesh_faces = Mesh(primitives=[Primitive(attributes=Attributes(POSITION=0), mode=4)])
 
     # Create node
     node = Node(mesh=0)
@@ -206,9 +214,10 @@ def gltf_to_html(gltf):
     return html
 
 if __name__ == "__main__":
-    inpath = "../../data/apc/6d_to_3d/294549_opt.npz"
-    proj_pts, hx_vv, hx_cc, hz_vv, hz_cc = load_npz(inpath)
-    comm_after_proj = check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc)
+    inpath = "../../data/apc/6d_to_3d/20240902_n=3.npz"
+    proj_pts, hx_vv, hx_cc, hz_vv, hz_cc, cut_bulk = load_npz(inpath)
+    comm_after_proj = check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc, cut_bulk)
+    logging.debug(f"comm_after_proj: {np.sum(comm_after_proj)}")
 
     gltf = npz_to_gltf(proj_pts, hx_vv, hx_cc, hz_vv, hz_cc, comm_after_proj)
     html = gltf_to_html("output.gltf")
