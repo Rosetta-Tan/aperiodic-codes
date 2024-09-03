@@ -187,14 +187,14 @@ def gen_new_pc_matrix(cut_pts,
             
     return new_parity_check_matrix
 
-def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk):
+def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk = None):
     '''
     Check commutation of all pairs of stabilizers.
     '''
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2)
+    return np.sum((hx @ hz.T) % 2) if cut_bulk == None else np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2);
 
 def gen_rotation(thetas,d):
     assert len(thetas) == (d*(d-1))//2, "Must provide d*(d-1)/2 angles";
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     # Setup RNG and MC params
     rng = np.random.default_rng(pid);
     nA = 6*5//2;
-    beta = 30.0;
+    beta = 50.0;
     cur_energy = 10.0;
 
     # Start from random rotation, offset
@@ -268,8 +268,8 @@ if __name__ == '__main__':
             new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n);
             new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
-            n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc, cut_bulk);
-            prop_energy = n_anti/len(cut_bulk);
+            n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
+            prop_energy = n_anti/len(cut_ind);
             acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
             if(rng.random() < acc_prob):
@@ -280,11 +280,11 @@ if __name__ == '__main__':
                 cur_angles = prop_angles.copy();
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
-                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_bulk)},True\n');
+                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_ind)},True\n');
                 f.close();
             else:
                 f = open(f'{f_base}.log','a');
-                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_bulk)},False\n');
+                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_ind)},False\n');
                 f.close();
             
             np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
