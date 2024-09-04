@@ -3,10 +3,10 @@ Construct a pair of X and Z parity-check matrices on 3D cut-and-project tiling
 from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
+import logging.config
 from os import getpid
 from subprocess import run
 import logging
-import pickle
 import numpy as np
 from numpy import array,sqrt,cos,sin,pi
 from scipy.linalg import expm
@@ -14,14 +14,16 @@ import scipy.sparse as sp
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
 from aperiodic_codes.cut_and_project.code_param_utils import *
-
 logging.basicConfig(level=logging.INFO)
 
-def symmod(x,n):
-    return (x+n)%(2*n+1)-n;
+# def symmod(x,n):
+#     return (x+n)%(2*n+1)-n;
+# 
+# def coord3_to_idx(x, y, z, n):
+#     return (symmod(x,n)+n) * (2*n+1)**2 + (symmod(y,n)+n) * (2*n+1) + (symmod(z,n)+n)
 
 def coord3_to_idx(x, y, z, n):
-    return (symmod(x,n)+n) * (2*n+1)**2 + (symmod(y,n)+n) * (2*n+1) + (symmod(z,n)+n)
+    return np.nan if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
 
 def idx_to_coord3(idx, n):
     x = idx // (2*n+1)**2 - n;
@@ -60,9 +62,12 @@ def gen_h1(n):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n)
                 row.append(idx); col.append(idx);
-                row.append(idx); col.append(coord3_to_idx(i-1, j, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j, k+1, n));
+                if(not np.isnan(loc := coord3_to_idx(i-1, j, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
+                    row.append(idx); col.append(loc);
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_h2(n):
@@ -86,9 +91,12 @@ def gen_h2(n):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n)
                 row.append(idx); col.append(idx);
-                row.append(idx); col.append(coord3_to_idx(i+1, j, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j, k-1, n));
+                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j, k-1, n))):
+                    row.append(idx); col.append(loc);
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -221,7 +229,7 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
 
 if __name__ == '__main__':
     from config import prefix, tests
-    pid = list(tests.keys())[2]
+    pid = '20240903_n=4_3'
     f_base = f'{prefix}/6d_to_3d/{pid}';
     nTh = 8;
     n = 3;
@@ -263,8 +271,6 @@ if __name__ == '__main__':
     np.savez(f'{f_base}.npz', proj_pts=proj_pts, cut_bulk=cut_bulk, offset=offset,
              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
     np.save(f'{f_base}_cut_ind.npy', cut_ind)
-    with open(f'{f_base}_map.pkl', 'wb') as f:
-        pickle.dump(full_to_cut_ind_map, f)
         
     # Check commutation
     print(f'n_bulk: {len(cut_bulk)}')
