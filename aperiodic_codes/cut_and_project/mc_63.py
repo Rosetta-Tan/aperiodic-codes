@@ -13,11 +13,8 @@ from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
 from aperiodic_codes.cut_and_project.code_param_utils import *
 
-def symmod(x,n):
-    return (x+n)%(2*n+1)-n;
-
 def coord3_to_idx(x, y, z, n):
-    return (symmod(x,n)+n) * (2*n+1)**2 + (symmod(y,n)+n) * (2*n+1) + (symmod(z,n)+n)
+    return np.nan if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
 
 def idx_to_coord3(idx, n):
     x = idx // (2*n+1)**2 - n;
@@ -38,12 +35,13 @@ def proj_mat():
 def gen_h1(n):
     '''
     Generate the first classical code in 3D.
-    Polynomial: f(x, y) = 1 + x^(-1) + y
-    Coordinate to index: (x, y) = (x * N + y)
+    Polynomial: f(x, y) = 1 + x^(-1) + y^(-1) + z
+    Coordinate to index: (x, y, z) = (x * N**2 + y * N + z)
     Parity-check relation:
-    (x, y) -> {
-        x - 1, y
-        x, y + 1
+    (x, y, z) -> {
+        x - 1, y, z
+        x, y - 1, z
+        x, y, z + 1
     }
     Returns:
         np.array, shape=(3, n**3)
@@ -55,9 +53,12 @@ def gen_h1(n):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n)
                 row.append(idx); col.append(idx);
-                row.append(idx); col.append(coord3_to_idx(i-1, j, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j, k+1, n));
+                if(not np.isnan(loc := coord3_to_idx(i-1, j, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
+                    row.append(idx); col.append(loc);
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_h2(n):
@@ -81,9 +82,12 @@ def gen_h2(n):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n)
                 row.append(idx); col.append(idx);
-                row.append(idx); col.append(coord3_to_idx(i+1, j, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j-1, k, n));
-                row.append(idx); col.append(coord3_to_idx(i, j, k-1, n));
+                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
+                    row.append(idx); col.append(loc);
+                if(not np.isnan(loc := coord3_to_idx(i, j, k-1, n))):
+                    row.append(idx); col.append(loc);
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
