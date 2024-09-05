@@ -6,18 +6,12 @@ H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 from os import getpid
 from subprocess import run
 import numpy as np
-from numpy import array,sqrt,cos,sin,pi
+from numpy import array,exp,sqrt,cos,sin,pi
 from scipy.linalg import expm
 import scipy.sparse as sp
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
 from aperiodic_codes.cut_and_project.code_param_utils import *
-
-# def symmod(x,n):
-#     return (x+n)%(2*n+1)-n;
-# 
-# def coord3_to_idx(x, y, z, n):
-#     return (symmod(x,n)+n) * (2*n+1)**2 + (symmod(y,n)+n) * (2*n+1) + (symmod(z,n)+n)
 
 def coord3_to_idx(x, y, z, n):
     return np.nan if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
@@ -38,90 +32,48 @@ def proj_mat():
                   [ s*cos(8*pi/5), s*sin(8*pi/5), c, s*cos(16*pi/5), s*sin(16*pi/5),  c],
                   [             0,             0, 1,              0,              0, -1]])*sqrt(2);
 
-def gen_h1(n):
-    '''
-    Generate the first classical code in 3D.
-    Polynomial: f(x, y) = 1 + x^(-1) + y^(-1) + z
-    Coordinate to index: (x, y) = (x * N**2 + y * N + z)
-    Parity-check relation:
-    (x, y) -> {
-        x - 1, y, z
-        x, y - 1, z
-        x, y, z + 1
-    }
-    Returns:
-        np.array, shape=(3, n**3)
-    '''
+dirs = np.array([[ 0, 0, 0],
+                 [ 1, 0, 0],
+                 [-1, 0, 0],
+                 [ 0, 1, 0],
+                 [ 0,-1, 0],
+                 [ 0, 0, 1],
+                 [ 0, 0,-1],
+                 [ 1, 1, 0],
+                 [ 1, 0, 1],
+                 [ 0, 1, 1],
+                 [ 1,-1, 0],
+                 [ 1, 0,-1],
+                 [ 0, 1,-1],
+                 [-1, 1, 0],
+                 [-1, 0, 1],
+                 [ 0,-1, 1],
+                 [-1,-1, 0],
+                 [-1, 0,-1],
+                 [ 0,-1,-1],
+                 [ 1, 1, 1],
+                 [ 1, 1,-1],
+                 [ 1,-1, 1],
+                 [ 1,-1,-1],
+                 [-1, 1, 1],
+                 [-1, 1,-1],
+                 [-1,-1, 1],
+                 [-1,-1,-1]]);
+
+def gen_code(spec,n):
     row = [];
     col = [];
     for i in range(-n,n+1):
         for j in range(-n,n+1):
             for k in range(-n,n+1):
-                idx = coord3_to_idx(i, j, k, n)
-                row.append(idx); col.append(idx);
-                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
-                    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i-1, j+1, k, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i+1, j-1, k+1, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i-1, j+1, k+1, n))):
-                #    row.append(idx); col.append(loc);
-                '''
-                if(not np.isnan(loc := coord3_to_idx(i-1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
-                    row.append(idx); col.append(loc);
-                '''
-    return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
-
-def gen_h2(n):
-    '''
-    Generate the second classical code in 3D.
-    Polynomial: f(x, y, z) = 1 + x + y + z
-    Coordinate to index: (x, y, z) = (x * N**2 + y * N + z)
-    Parity-check relation:
-    (x, y, z) -> {
-        x + 1, y, z
-        x, y + 1, z
-        x, y, z + 1
-    }
-    Returns:
-        np.array, shape=(3, n**3)
-    '''
-    row = [];
-    col = []; 
-    for i in range(-n,n+1):
-        for j in range(-n,n+1):
-            for k in range(-n,n+1):
-                idx = coord3_to_idx(i, j, k, n)
-                row.append(idx); col.append(idx);
-                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j+1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
-                    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i, j-1, k+1, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i+1, j-1, k-1, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i-1, j+1, k-1, n))):
-                #    row.append(idx); col.append(loc);
-                '''
-                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k-1, n))):
-                    row.append(idx); col.append(loc);
-                '''
+                idx = coord3_to_idx(i, j, k, n);
+                cur_col = np.array([coord3_to_idx(i+dirs[d,0], j+dirs[d,1], k+dirs[d,2], n) for d in np.where(spec == 1)[0]]);
+                cur_col = cur_col[~np.isnan(cur_col)];
+                row = row + [idx]*len(cur_col);
+                col = col + cur_col.tolist();
+                #for d in np.where(spec == 1)[0]:
+                #    if(not np.isnan(loc := coord3_to_idx(i+dirs[d,0], j+dirs[d,1], k+dirs[d,2], n))):
+                #        row.append(idx); col.append(loc);
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -255,47 +207,86 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
 if __name__ == '__main__':
     prefix = "/data/apc"
     pid = getpid();
-    f_base = f'{prefix}/6d_to_3d/{pid}';
+    f_base = f'{prefix}/code/{pid}';
     nTh = 8;
     n = 3;
 
     # Generate 6d lattice objects
-    lat_pts = gen_lat(low=-n, high=n, dim=6)
+    lat_pts = gen_lat(low=-n, high=n, dim=6);
     assert lat_pts.shape[0] == (2*n+1)**6, 'Number of lattice points should be N**6'
     voronoi = gen_voronoi(dim=6);
     bulk = np.all(abs(lat_pts) != n,axis=1);
     P = proj_mat();
     proj_pos = P[:,:3];
     proj_neg = P[:,3:];
-    
-    h1 = gen_h1(n)
-    h2 = gen_h2(n)
-    hx, hz = gen_hgp(h1, h2)
-    hx_vv, hx_cc = get_hx_vv_cc(hx, n)
-    hz_vv, hz_cc = get_hz_vv_cc(hz, n)
 
-    offset = np.zeros(6);#array([0.4079719930968392, 0.997937600200803, 0.3769633726733579, 0.6700701124709246, 0.5488023718269116, 0.9545779305572899]);
-    R = gen_rotation(np.zeros(15),6);
-    # offset = array([0.4079719930968392, 0.997937600200803, 0.3769633726733579, 0.6700701124709246, 0.5488023718269116, 0.9545779305572899]);
-    # R = gen_rotation([0.406693597447301, 0.8557064391672391, -0.7054012685494304, 0.5583263039701757, -1.0453097847710786, 0.20928181721551956, -0.22542659030910867, 0.8305164272826089, 0.16508525565279075, 1.092820496097184, -1.0946197986847281, 0.12839419181590464, 0.9108660127040361, 1.4291079650666494, -1.0219329747515193],6);
-    proj_pos = R @ proj_pos;
-    proj_neg = R @ proj_neg;
+    # Setup RNG and MC params
+    rng = np.random.default_rng(pid);
+    offset = rng.uniform(0.0,1.0,6);
+    beta = 30.0;
+    cur_energy = np.inf;
 
     cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
     cut_pts = lat_pts[cut_ind,:];
-    proj_pts = project(cut_pts, proj_pos)
-    cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]];
+    proj_pts = project(cut_pts, proj_pos);
+    n_points = len(cut_ind);
+    
+    # Initial codes are generated randomly
+    cur_code_1 = rng.integers(0,1,27,endpoint=True);
+    cur_code_2 = rng.integers(0,1,27,endpoint=True);
+    prop_code_1 = cur_code_1.copy();
+    prop_code_2 = cur_code_2.copy();
 
-    new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
-    new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n)
-    new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n)
-    new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n)
+    while(True):
+        # Try proposed codes
+        h1 = gen_code(prop_code_1,n);
+        h2 = gen_code(prop_code_2,n);
+        hx, hz = gen_hgp(h1, h2);
+        hx_vv, hx_cc = get_hx_vv_cc(hx, n);
+        hz_vv, hz_cc = get_hz_vv_cc(hz, n);
 
-    print(f'shape of proj_pts: {proj_pts.shape}')
-    np.savez(f'{f_base}.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
-             hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
+        new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n);
+        new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n);
+        new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n);
+        new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
-    # Check commutation
-    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc))
-    #print(get_classical_code_distance_time_limit(np.hstack((new_hx_cc,new_hx_vv)),10));
-    #print(get_classical_code_distance_time_limit(np.hstack((new_hz_cc,new_hz_vv)),10)); 
+        n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
+        prop_energy = n_anti/n_points;
+        acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
+
+        if(rng.random() < acc_prob):
+            if(prop_energy < cur_energy):
+                np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
+                         hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
+                
+            cur_code_1 = prop_code_1.copy();
+            cur_code_2 = prop_code_2.copy();
+            cur_energy = prop_energy;
+            f = open(f'{f_base}.log','a');
+            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+','.join(map(str,prop_code_2))+f',{n_anti},{n_points},True\n');
+            f.close();
+        else:
+            f = open(f'{f_base}.log','a');
+            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+','.join(map(str,prop_code_2))+f',{n_anti},{n_points},False\n');
+            f.close();
+        
+        np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
+                 hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
+
+        if(n_anti == 0):
+            break;
+
+        # Generate proposed cut
+        count = 0;
+        while count == 0 or np.sum(prop_code_1[1:]) < 3:
+            prop_code_1 = cur_code_1.copy();
+            flip = rng.integers(0,27,1)[0];
+            prop_code_1[flip] = 1-prop_code_1[flip];
+            count += 1;
+
+        count = 0;
+        while count == 0 or np.sum(prop_code_2[1:]) < 3:
+            prop_code_2 = cur_code_2.copy();
+            flip = rng.integers(0,27,1)[0];
+            prop_code_2[flip] = 1-prop_code_2[flip];
+            count += 1;
