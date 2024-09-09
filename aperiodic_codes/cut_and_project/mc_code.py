@@ -32,6 +32,7 @@ def proj_mat():
                   [ s*cos(8*pi/5), s*sin(8*pi/5), c, s*cos(16*pi/5), s*sin(16*pi/5),  c],
                   [             0,             0, 1,              0,              0, -1]])*sqrt(2);
 
+N_DIRS = 27;
 dirs = np.array([[ 0, 0, 0],
                  [ 1, 0, 0],
                  [-1, 0, 0],
@@ -71,9 +72,6 @@ def gen_code(spec,n):
                 cur_col = cur_col[~np.isnan(cur_col)];
                 row = row + [idx]*len(cur_col);
                 col = col + cur_col.tolist();
-                #for d in np.where(spec == 1)[0]:
-                #    if(not np.isnan(loc := coord3_to_idx(i+dirs[d,0], j+dirs[d,1], k+dirs[d,2], n))):
-                #        row.append(idx); col.append(loc);
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -102,7 +100,7 @@ def coord6_to_ind(coords, n):
 
 def ind_to_coord6(ind, n):
     '''
-    ind -> (x0, x1, x2, x3, x4)
+    ind -> (x0, x1, x2, x3, x4, x5)
     '''
     N = 2*n+1
     x0 = (ind // N**3) // N**2 - n;
@@ -135,7 +133,7 @@ def are_connected(pt1, pt2, parity_check_matrix, n):
     '''
     Check if two points are connected by the parity-check in the 5D lattice.
     '''
-    assert len(pt1) == len(pt2) == 6, 'Points should be 5-element vector'
+    assert len(pt1) == len(pt2) == 6, 'Points should be 6-element vector'
     assert parity_check_matrix.shape == ((2*n+1)**6, (2*n+1)**6), \
     print(f'parity_check_matrix.shape: {parity_check_matrix.shape}')
     ind1 = coord6_to_ind(pt1, n)
@@ -232,12 +230,14 @@ if __name__ == '__main__':
     n_points = len(cut_ind);
     
     # Initial codes are generated randomly
-    cur_code_1 = rng.integers(0,1,27,endpoint=True);
-    cur_code_2 = rng.integers(0,1,27,endpoint=True);
+    cur_code_1 = np.zeros(27,dtype=int);
+    cur_code_2 = np.zeros(27,dtype=int);
+    while np.sum(cur_code_1) < 7: cur_code_1 = rng.integers(0,1,27,endpoint=True);
+    while np.sum(cur_code_2) < 7: cur_code_2 = rng.integers(0,1,27,endpoint=True);
     prop_code_1 = cur_code_1.copy();
     prop_code_2 = cur_code_2.copy();
 
-    while(True):
+    while True:
         # Try proposed codes
         h1 = gen_code(prop_code_1,n);
         h2 = gen_code(prop_code_2,n);
@@ -254,8 +254,9 @@ if __name__ == '__main__':
         prop_energy = n_anti/n_points;
         acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
-        if(rng.random() < acc_prob):
-            if(prop_energy < cur_energy):
+        # Accept with Boltzmann probability if projected code is sufficiently connected
+        if np.sum(new_hx_vv)/n_points >= 3.0 and np.sum(new_hx_cc)/n_points >= 3.0 and rng.random() < acc_prob:
+            if prop_energy < cur_energy:
                 np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
                          hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
                 
@@ -278,14 +279,14 @@ if __name__ == '__main__':
 
         # Generate proposed cut
         count = 0;
-        while count == 0 or np.sum(prop_code_1[1:]) < 3:
+        while count == 0 or np.sum(prop_code_1[1:]) < 6:
             prop_code_1 = cur_code_1.copy();
             flip = rng.integers(0,27,1)[0];
             prop_code_1[flip] = 1-prop_code_1[flip];
             count += 1;
 
         count = 0;
-        while count == 0 or np.sum(prop_code_2[1:]) < 3:
+        while count == 0 or np.sum(prop_code_2[1:]) < 6:
             prop_code_2 = cur_code_2.copy();
             flip = rng.integers(0,27,1)[0];
             prop_code_2[flip] = 1-prop_code_2[flip];
