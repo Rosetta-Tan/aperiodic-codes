@@ -30,7 +30,7 @@ def proj_mat():
                   [ s*cos(4*pi/5), s*sin(4*pi/5), c,  s*cos(8*pi/5),  s*sin(8*pi/5),  c],
                   [ s*cos(6*pi/5), s*sin(6*pi/5), c, s*cos(12*pi/5), s*sin(12*pi/5),  c],
                   [ s*cos(8*pi/5), s*sin(8*pi/5), c, s*cos(16*pi/5), s*sin(16*pi/5),  c],
-                  [             0,             0, 1,              0,              0, -1]])*sqrt(2);
+                  [             0,             0, 1,              0,              0, -1]])/sqrt(2);
 
 def gen_h1(n):
     '''

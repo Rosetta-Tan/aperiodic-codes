@@ -30,36 +30,36 @@ def proj_mat():
                   [ s*cos(4*pi/5), s*sin(4*pi/5), c,  s*cos(8*pi/5),  s*sin(8*pi/5),  c],
                   [ s*cos(6*pi/5), s*sin(6*pi/5), c, s*cos(12*pi/5), s*sin(12*pi/5),  c],
                   [ s*cos(8*pi/5), s*sin(8*pi/5), c, s*cos(16*pi/5), s*sin(16*pi/5),  c],
-                  [             0,             0, 1,              0,              0, -1]])*sqrt(2);
+                  [             0,             0, 1,              0,              0, -1]])/sqrt(2);
 
-N_DIRS = 27;
-dirs = np.array([[ 0, 0, 0],
-                 [ 1, 0, 0],
-                 [-1, 0, 0],
-                 [ 0, 1, 0],
-                 [ 0,-1, 0],
-                 [ 0, 0, 1],
-                 [ 0, 0,-1],
-                 [ 1, 1, 0],
-                 [ 1, 0, 1],
-                 [ 0, 1, 1],
-                 [ 1,-1, 0],
-                 [ 1, 0,-1],
-                 [ 0, 1,-1],
-                 [-1, 1, 0],
-                 [-1, 0, 1],
-                 [ 0,-1, 1],
-                 [-1,-1, 0],
-                 [-1, 0,-1],
-                 [ 0,-1,-1],
-                 [ 1, 1, 1],
-                 [ 1, 1,-1],
-                 [ 1,-1, 1],
-                 [ 1,-1,-1],
-                 [-1, 1, 1],
-                 [-1, 1,-1],
-                 [-1,-1, 1],
-                 [-1,-1,-1]]);
+DIRS = 27;
+ds = np.array([[ 0, 0, 0],
+               [ 1, 0, 0],
+               [-1, 0, 0],
+               [ 0, 1, 0],
+               [ 0,-1, 0],
+               [ 0, 0, 1],
+               [ 0, 0,-1],
+               [ 1, 1, 0],
+               [ 1, 0, 1],
+               [ 0, 1, 1],
+               [ 1,-1, 0],
+               [ 1, 0,-1],
+               [ 0, 1,-1],
+               [-1, 1, 0],
+               [-1, 0, 1],
+               [ 0,-1, 1],
+               [-1,-1, 0],
+               [-1, 0,-1],
+               [ 0,-1,-1],
+               [ 1, 1, 1],
+               [ 1, 1,-1],
+               [ 1,-1, 1],
+               [ 1,-1,-1],
+               [-1, 1, 1],
+               [-1, 1,-1],
+               [-1,-1, 1],
+               [-1,-1,-1]]);
 
 def gen_code(spec,n):
     row = [];
@@ -68,10 +68,9 @@ def gen_code(spec,n):
         for j in range(-n,n+1):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n);
-                cur_col = np.array([coord3_to_idx(i+dirs[d,0], j+dirs[d,1], k+dirs[d,2], n) for d in np.where(spec == 1)[0]]);
-                cur_col = cur_col[~np.isnan(cur_col)];
+                cur_col = [y for x in np.where(spec)[0] if (y := coord3_to_idx(*(ds[x]+[i,j,k]),n)) is not None];
                 row = row + [idx]*len(cur_col);
-                col = col + cur_col.tolist();
+                col = col + cur_col;
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -221,7 +220,7 @@ if __name__ == '__main__':
     # Setup RNG and MC params
     rng = np.random.default_rng(pid);
     offset = rng.uniform(0.0,1.0,6);
-    beta = 30.0;
+    beta = 20.0;
     cur_energy = np.inf;
 
     cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
@@ -230,10 +229,10 @@ if __name__ == '__main__':
     n_points = len(cut_ind);
     
     # Initial codes are generated randomly
-    cur_code_1 = np.zeros(27,dtype=int);
-    cur_code_2 = np.zeros(27,dtype=int);
-    while np.sum(cur_code_1) < 7: cur_code_1 = rng.integers(0,1,27,endpoint=True);
-    while np.sum(cur_code_2) < 7: cur_code_2 = rng.integers(0,1,27,endpoint=True);
+    cur_code_1 = np.zeros(DIRS,dtype=int);
+    cur_code_2 = np.zeros(DIRS,dtype=int);
+    while np.sum(cur_code_1) < 7: cur_code_1 = rng.integers(0,1,DIRS,endpoint=True);
+    while np.sum(cur_code_2) < 7: cur_code_2 = rng.integers(0,1,DIRS,endpoint=True);
     prop_code_1 = cur_code_1.copy();
     prop_code_2 = cur_code_2.copy();
 
@@ -281,13 +280,13 @@ if __name__ == '__main__':
         count = 0;
         while count == 0 or np.sum(prop_code_1[1:]) < 6:
             prop_code_1 = cur_code_1.copy();
-            flip = rng.integers(0,27,1)[0];
+            flip = rng.integers(0,DIRS,1)[0];
             prop_code_1[flip] = 1-prop_code_1[flip];
             count += 1;
 
         count = 0;
         while count == 0 or np.sum(prop_code_2[1:]) < 6:
             prop_code_2 = cur_code_2.copy();
-            flip = rng.integers(0,27,1)[0];
+            flip = rng.integers(0,DIRS,1)[0];
             prop_code_2[flip] = 1-prop_code_2[flip];
             count += 1;

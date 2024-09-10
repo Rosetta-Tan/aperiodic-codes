@@ -20,7 +20,7 @@ from aperiodic_codes.cut_and_project.code_param_utils import *
 #     return (symmod(x,n)+n) * (2*n+1)**2 + (symmod(y,n)+n) * (2*n+1) + (symmod(z,n)+n)
 
 def coord3_to_idx(x, y, z, n):
-    return np.nan if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
+    return None if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
 
 def idx_to_coord3(idx, n):
     x = idx // (2*n+1)**2 - n;
@@ -36,92 +36,46 @@ def proj_mat():
                   [ s*cos(4*pi/5), s*sin(4*pi/5), c,  s*cos(8*pi/5),  s*sin(8*pi/5),  c],
                   [ s*cos(6*pi/5), s*sin(6*pi/5), c, s*cos(12*pi/5), s*sin(12*pi/5),  c],
                   [ s*cos(8*pi/5), s*sin(8*pi/5), c, s*cos(16*pi/5), s*sin(16*pi/5),  c],
-                  [             0,             0, 1,              0,              0, -1]])*sqrt(2);
+                  [             0,             0, 1,              0,              0, -1]])/sqrt(2);
 
-def gen_h1(n):
-    '''
-    Generate the first classical code in 3D.
-    Polynomial: f(x, y) = 1 + x^(-1) + y^(-1) + z
-    Coordinate to index: (x, y) = (x * N**2 + y * N + z)
-    Parity-check relation:
-    (x, y) -> {
-        x - 1, y, z
-        x, y - 1, z
-        x, y, z + 1
-    }
-    Returns:
-        np.array, shape=(3, n**3)
-    '''
+ds = np.array([[ 0, 0, 0],
+               [ 1, 0, 0],
+               [-1, 0, 0],
+               [ 0, 1, 0],
+               [ 0,-1, 0],
+               [ 0, 0, 1],
+               [ 0, 0,-1],
+               [ 1, 1, 0],
+               [ 1, 0, 1],
+               [ 0, 1, 1],
+               [ 1,-1, 0],
+               [ 1, 0,-1],
+               [ 0, 1,-1],
+               [-1, 1, 0],
+               [-1, 0, 1],
+               [ 0,-1, 1],
+               [-1,-1, 0],
+               [-1, 0,-1],
+               [ 0,-1,-1],
+               [ 1, 1, 1],
+               [ 1, 1,-1],
+               [ 1,-1, 1],
+               [ 1,-1,-1],
+               [-1, 1, 1],
+               [-1, 1,-1],
+               [-1,-1, 1],
+               [-1,-1,-1]]);
+
+def gen_code(spec,n):
     row = [];
     col = [];
     for i in range(-n,n+1):
         for j in range(-n,n+1):
             for k in range(-n,n+1):
-                idx = coord3_to_idx(i, j, k, n)
-                row.append(idx); col.append(idx);
-                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
-                    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i-1, j+1, k, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i+1, j-1, k+1, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i-1, j+1, k+1, n))):
-                #    row.append(idx); col.append(loc);
-                '''
-                if(not np.isnan(loc := coord3_to_idx(i-1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
-                    row.append(idx); col.append(loc);
-                '''
-    return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
-
-def gen_h2(n):
-    '''
-    Generate the second classical code in 3D.
-    Polynomial: f(x, y, z) = 1 + x + y + z
-    Coordinate to index: (x, y, z) = (x * N**2 + y * N + z)
-    Parity-check relation:
-    (x, y, z) -> {
-        x + 1, y, z
-        x, y + 1, z
-        x, y, z + 1
-    }
-    Returns:
-        np.array, shape=(3, n**3)
-    '''
-    row = [];
-    col = []; 
-    for i in range(-n,n+1):
-        for j in range(-n,n+1):
-            for k in range(-n,n+1):
-                idx = coord3_to_idx(i, j, k, n)
-                row.append(idx); col.append(idx);
-                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j+1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k+1, n))):
-                    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i, j-1, k+1, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i+1, j-1, k-1, n))):
-                #    row.append(idx); col.append(loc);
-                #if(not np.isnan(loc := coord3_to_idx(i-1, j+1, k-1, n))):
-                #    row.append(idx); col.append(loc);
-                '''
-                if(not np.isnan(loc := coord3_to_idx(i+1, j, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j-1, k, n))):
-                    row.append(idx); col.append(loc);
-                if(not np.isnan(loc := coord3_to_idx(i, j, k-1, n))):
-                    row.append(idx); col.append(loc);
-                '''
+                idx = coord3_to_idx(i, j, k, n);
+                cur_col = [y for x in np.where(spec)[0] if (y := coord3_to_idx(*(ds[x]+[i,j,k]),n)) is not None];
+                row = row + [idx]*len(cur_col);
+                col = col + cur_col;
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
 
 def gen_hgp(h1, h2):
@@ -268,16 +222,14 @@ if __name__ == '__main__':
     proj_pos = P[:,:3];
     proj_neg = P[:,3:];
     
-    h1 = gen_h1(n)
-    h2 = gen_h2(n)
+    h1 = gen_code([1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0],n)
+    h2 = gen_code([1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0],n)
     hx, hz = gen_hgp(h1, h2)
     hx_vv, hx_cc = get_hx_vv_cc(hx, n)
     hz_vv, hz_cc = get_hz_vv_cc(hz, n)
 
-    offset = np.zeros(6);#array([0.4079719930968392, 0.997937600200803, 0.3769633726733579, 0.6700701124709246, 0.5488023718269116, 0.9545779305572899]);
+    offset = np.zeros(6); 
     R = gen_rotation(np.zeros(15),6);
-    # offset = array([0.4079719930968392, 0.997937600200803, 0.3769633726733579, 0.6700701124709246, 0.5488023718269116, 0.9545779305572899]);
-    # R = gen_rotation([0.406693597447301, 0.8557064391672391, -0.7054012685494304, 0.5583263039701757, -1.0453097847710786, 0.20928181721551956, -0.22542659030910867, 0.8305164272826089, 0.16508525565279075, 1.092820496097184, -1.0946197986847281, 0.12839419181590464, 0.9108660127040361, 1.4291079650666494, -1.0219329747515193],6);
     proj_pos = R @ proj_pos;
     proj_neg = R @ proj_neg;
 
