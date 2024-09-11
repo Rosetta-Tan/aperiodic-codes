@@ -14,7 +14,7 @@ from aperiodic_codes.cut_and_project.cnp_utils import *
 from aperiodic_codes.cut_and_project.code_param_utils import *
 
 def coord3_to_idx(x, y, z, n):
-    return np.nan if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
+    return None if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
 
 def idx_to_coord3(idx, n):
     x = idx // (2*n+1)**2 - n;
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     # Setup RNG and MC params
     rng = np.random.default_rng(pid);
     offset = rng.uniform(0.0,1.0,6);
-    beta = 20.0;
+    beta = 15.0;
     cur_energy = np.inf;
 
     cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
