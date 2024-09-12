@@ -82,7 +82,7 @@ def get_neighbors(pt, parity_check_matrix, n):
     return neighbor_inds, neighbors
 
 def gen_new_pc_matrix(cut_pts,
-                     full_to_cut_ind_map,
+         708526.log            full_to_cut_ind_map,
                      original_parity_check_matrix, n):
     '''
     Generate the new parity-check matrix after cutting and projecting.
@@ -106,7 +106,7 @@ def gen_new_pc_matrix(cut_pts,
 if __name__ == '__main__':
     prefix = "/data/apc"
     pid = getpid();
-    f_base = f'{prefix}/6d_to_3d/{pid}';
+    f_base = f'{prefix}/code/{pid}';
     DIRS = 27;
     nTh = 8;
     n = 3;
