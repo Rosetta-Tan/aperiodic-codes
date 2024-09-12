@@ -4,94 +4,17 @@ from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
 from os import getpid
-from subprocess import run
 import numpy as np
 from numpy import array,exp,sqrt,cos,sin,pi
-from scipy.linalg import expm
-import scipy.sparse as sp
-from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
-from aperiodic_codes.cut_and_project.code_param_utils import *
-
-def coord3_to_idx(x, y, z, n):
-    return None if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
-
-def idx_to_coord3(idx, n):
-    x = idx // (2*n+1)**2 - n;
-    y = (idx % (2*n+1)**2) // (2*n+1) - n;
-    z = idx % (2*n+1) - n;
-    return x, y, z
-
-def proj_mat():
-    c = 1/sqrt(5);
-    s = 2/sqrt(5);
-    return array([[ s*cos(0*pi/5), s*sin(0*pi/5), c,  s*cos(0*pi/5),  s*sin(0*pi/5),  c],
-                  [ s*cos(2*pi/5), s*sin(2*pi/5), c,  s*cos(4*pi/5),  s*sin(4*pi/5),  c],
-                  [ s*cos(4*pi/5), s*sin(4*pi/5), c,  s*cos(8*pi/5),  s*sin(8*pi/5),  c],
-                  [ s*cos(6*pi/5), s*sin(6*pi/5), c, s*cos(12*pi/5), s*sin(12*pi/5),  c],
-                  [ s*cos(8*pi/5), s*sin(8*pi/5), c, s*cos(16*pi/5), s*sin(16*pi/5),  c],
-                  [             0,             0, 1,              0,              0, -1]])/sqrt(2);
-
-DIRS = 27;
-ds = np.array([[ 0, 0, 0],
-               [ 1, 0, 0],
-               [-1, 0, 0],
-               [ 0, 1, 0],
-               [ 0,-1, 0],
-               [ 0, 0, 1],
-               [ 0, 0,-1],
-               [ 1, 1, 0],
-               [ 1, 0, 1],
-               [ 0, 1, 1],
-               [ 1,-1, 0],
-               [ 1, 0,-1],
-               [ 0, 1,-1],
-               [-1, 1, 0],
-               [-1, 0, 1],
-               [ 0,-1, 1],
-               [-1,-1, 0],
-               [-1, 0,-1],
-               [ 0,-1,-1],
-               [ 1, 1, 1],
-               [ 1, 1,-1],
-               [ 1,-1, 1],
-               [ 1,-1,-1],
-               [-1, 1, 1],
-               [-1, 1,-1],
-               [-1,-1, 1],
-               [-1,-1,-1]]);
-
-def gen_code(spec,n):
-    row = [];
-    col = [];
-    for i in range(-n,n+1):
-        for j in range(-n,n+1):
-            for k in range(-n,n+1):
-                idx = coord3_to_idx(i, j, k, n);
-                cur_col = [y for x in np.where(spec)[0] if (y := coord3_to_idx(*(ds[x]+[i,j,k]),n)) is not None];
-                row = row + [idx]*len(cur_col);
-                col = col + cur_col;
-    return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
-
-def gen_hgp(h1, h2):
-    '''
-    Generate the HGP of H1 and H2.
-    Hx = [H_1 x I_n2, I_m1 x H_2^T]
-    Hz = [H_1^T x I_m2, I_n1 x H_2]
-    Returns:
-        Hx and Hz
-    '''
-    hx = sp.hstack((sp.kron(h1,sp.eye(h2.shape[1])),sp.kron(sp.eye(h1.shape[0]),h2.T.tocsc()))).tocsc();
-    hz = sp.hstack((sp.kron(sp.eye(h1.shape[1]),h2),sp.kron(h1.T.tocsc(),sp.eye(h2.shape[0])))).tocsc();
-    return hx, hz
 
 def coord6_to_ind(coords, n):
     '''
-    (x0, x1) -> coordinates of code1
+    (x0, x1, x2) -> coordinates of code1
     (x2, x3, x4) -> coordinates of code2
     6D ind: (x0* n**2 + x1 * n + x2) * n**3 + (x3 * n**2 + x4 * n + x5)
     Args:
-        coords: np.array, shape=(5,)
+        coords: np.array, shape=(6,)
     '''
     N = 2*n+1
     x0, x1, x2, x3, x4, x5 = coords
@@ -109,6 +32,16 @@ def ind_to_coord6(ind, n):
     x4 = ((ind % N**3) % N**2) // N - n;
     x5 = ((ind % N**3) % N**2) % N - n;
     return array([x0, x1, x2, x3, x4, x5])
+
+def proj_mat():
+    c = 1/sqrt(5);
+    s = 2/sqrt(5);
+    return array([[ s*cos(0*pi/5), s*sin(0*pi/5), c,  s*cos(0*pi/5),  s*sin(0*pi/5),  c],
+                  [ s*cos(2*pi/5), s*sin(2*pi/5), c,  s*cos(4*pi/5),  s*sin(4*pi/5),  c],
+                  [ s*cos(4*pi/5), s*sin(4*pi/5), c,  s*cos(8*pi/5),  s*sin(8*pi/5),  c],
+                  [ s*cos(6*pi/5), s*sin(6*pi/5), c, s*cos(12*pi/5), s*sin(12*pi/5),  c],
+                  [ s*cos(8*pi/5), s*sin(8*pi/5), c, s*cos(16*pi/5), s*sin(16*pi/5),  c],
+                  [             0,             0, 1,              0,              0, -1]])/sqrt(2);
 
 def get_hx_vv_cc(hx, n):
     '''
@@ -130,7 +63,7 @@ def get_hz_vv_cc(hz, n):
 
 def are_connected(pt1, pt2, parity_check_matrix, n):  
     '''
-    Check if two points are connected by the parity-check in the 5D lattice.
+    Check if two points are connected by the parity-check in the 6D lattice.
     '''
     assert len(pt1) == len(pt2) == 6, 'Points should be 6-element vector'
     assert parity_check_matrix.shape == ((2*n+1)**6, (2*n+1)**6), \
@@ -141,7 +74,7 @@ def are_connected(pt1, pt2, parity_check_matrix, n):
 
 def get_neighbors(pt, parity_check_matrix, n):
     '''
-    Get neighbors in 5D.
+    Get neighbors in 6D.
     '''
     ind = coord6_to_ind(pt, n)
     neighbor_inds = np.where(parity_check_matrix[ind].todense().A1 == 1)[0]
@@ -170,41 +103,11 @@ def gen_new_pc_matrix(cut_pts,
             
     return new_parity_check_matrix
 
-def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk = None):
-    '''
-    Check commutation of all pairs of stabilizers.
-    '''
-    assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
-    hx = np.hstack((hx_vv, hx_cc))
-    hz = np.hstack((hz_vv, hz_cc))
-    return np.sum((hx @ hz.T) % 2) if cut_bulk == None else np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2);
-
-def gen_rotation(thetas,d):
-    assert len(thetas) == (d*(d-1))//2, "Must provide d*(d-1)/2 angles";
-    T = np.zeros((d,d),dtype=float);
-    a = 0;
-    for i in range(d):
-        for j in range(i+1,d):
-            T[i,j] = thetas[a];
-            T[j,i] = -thetas[a];
-            a += 1;
-    return expm(T);
-
-def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
-    orth_pts = lat_pts @ proj_neg;
-    orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
-    np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'cut_multi {f_base} {nTh}',shell=True); 
-    cut_inds = np.load(f'{f_base}_ind.npy');
-    run(f'rm {f_base}_cut.npz',shell=True);
-    run(f'rm {f_base}_ind.npy',shell=True);
-    
-    return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
-
 if __name__ == '__main__':
     prefix = "/data/apc"
     pid = getpid();
-    f_base = f'{prefix}/code/{pid}';
+    f_base = f'{prefix}/6d_to_3d/{pid}';
+    DIRS = 27;
     nTh = 8;
     n = 3;
 
@@ -238,8 +141,8 @@ if __name__ == '__main__':
 
     while True:
         # Try proposed codes
-        h1 = gen_code(prop_code_1,n);
-        h2 = gen_code(prop_code_2,n);
+        h1 = gen_code_3d(prop_code_1,n);
+        h2 = gen_code_3d(prop_code_2,n);
         hx, hz = gen_hgp(h1, h2);
         hx_vv, hx_cc = get_hx_vv_cc(hx, n);
         hz_vv, hz_cc = get_hz_vv_cc(hz, n);
