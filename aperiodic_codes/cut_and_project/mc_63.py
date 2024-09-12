@@ -7,7 +7,7 @@ from os import getpid
 from subprocess import run
 import numpy as np
 from numpy import array,exp,sqrt,cos,sin,pi
-from scipy.linalg import expm
+from scipy.linalg import expm,norm
 import scipy.sparse as sp
 from scipy.stats import special_ortho_group
 from aperiodic_codes.cut_and_project.cnp_utils import *
@@ -233,7 +233,9 @@ if __name__ == '__main__':
     P = proj_mat();
     proj_pos_base = P[:,:3];
     proj_neg_base = P[:,3:];
-
+    proj_pos = proj_pos_base.copy();
+    proj_neg = proj_neg_base.copy();
+    
     h1 = gen_h1(n);
     h2 = gen_h2(n);
     hx, hz = gen_hgp(h1, h2);
@@ -243,20 +245,17 @@ if __name__ == '__main__':
     # Setup RNG and MC params
     rng = np.random.default_rng(pid);
     nA = 6*5//2;
-    beta = 50.0;
-    cur_energy = 10.0;
+    beta = 30.0;
+    cur_energy = np.inf;
 
     # Start from random rotation, offset
-    cur_angles = rng.uniform(0.0,2*pi,nA).tolist();
+    cur_angles = np.zeros(nA,dtype=float);#rng.uniform(0.0,2*pi,nA).tolist();
     prop_angles = cur_angles.copy();
     R = gen_rotation(cur_angles,6);
     offset = rng.uniform(0.0,1.0,6);
 
     while(True):
         # Try proposed cut
-        proj_pos = R @ proj_pos_base;
-        proj_neg = R @ proj_neg_base;
-
         cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
         cut_pts = lat_pts[cut_ind,:];
         proj_pts = project(cut_pts, proj_pos);
@@ -293,7 +292,14 @@ if __name__ == '__main__':
             if(n_anti == 0):
                 break;
 
-        # Generate proposed cut
-        prop_angles = cur_angles.copy();
-        prop_angles[rng.integers(0,nA,1)[0]] += rng.normal(0.0,0.1);
-        R = gen_rotation(prop_angles,6);
+        # Generate proposed cut and test uniformity
+        ov_var = np.inf;
+        while ov_var > 1/18:
+            prop_angles = cur_angles.copy();
+            prop_angles[rng.integers(0,nA,1)[0]] += rng.normal(0.0,0.1);
+            R = gen_rotation(prop_angles,6);
+            proj_pos = R @ proj_pos_base;
+            proj_neg = R @ proj_neg_base;
+            norms = norm(proj_pos,axis=1);
+            ovs = (proj_pos@proj_pos.T/np.outer(norms, norms))[np.triu_indices(6,k=1)]
+            ov_var = np.var(abs(ovs));
