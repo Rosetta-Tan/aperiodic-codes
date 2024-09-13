@@ -61,7 +61,7 @@ def get_hz_vv_cc(hz, n):
     print(f'hz_vv.shape: {hz_vv.shape}, hz_cc.shape: {hz_cc.shape}')
     return hz_vv, hz_cc
 
-def are_connected(pt1, pt2, parity_check_matrix, n):  
+def are_connected(pt1, pt2, parity_check_matrix, n):
     '''
     Check if two points are connected by the parity-check in the 6D lattice.
     '''
@@ -82,8 +82,8 @@ def get_neighbors(pt, parity_check_matrix, n):
     return neighbor_inds, neighbors
 
 def gen_new_pc_matrix(cut_pts,
-         708526.log            full_to_cut_ind_map,
-                     original_parity_check_matrix, n):
+                      full_to_cut_ind_map,
+                      original_parity_check_matrix, n):
     '''
     Generate the new parity-check matrix after cutting and projecting.
     new_parity_check_matrix will contain all-zero rows,
@@ -91,7 +91,7 @@ def gen_new_pc_matrix(cut_pts,
     '''
     n_cut = cut_pts.shape[0]
     new_parity_check_matrix = np.zeros((n_cut, n_cut), dtype=int)
-    
+
     # Connect neighboring points in cut_pts
     for i_cut in range(n_cut):
         cut_pt = cut_pts[i_cut,:]
@@ -100,7 +100,7 @@ def gen_new_pc_matrix(cut_pts,
             if i_full_neighbor in full_to_cut_ind_map:
                 i_cut_neighbor = full_to_cut_ind_map[i_full_neighbor]
                 new_parity_check_matrix[i_cut, i_cut_neighbor] = 1
-            
+
     return new_parity_check_matrix
 
 if __name__ == '__main__':
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     cut_pts = lat_pts[cut_ind,:];
     proj_pts = project(cut_pts, proj_pos);
     n_points = len(cut_ind);
-    
+
     # Initial codes are generated randomly
     cur_code_1 = np.zeros(DIRS,dtype=int);
     cur_code_2 = np.zeros(DIRS,dtype=int);
@@ -161,7 +161,7 @@ if __name__ == '__main__':
             if prop_energy < cur_energy:
                 np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
                          hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
-                
+
             cur_code_1 = prop_code_1.copy();
             cur_code_2 = prop_code_2.copy();
             cur_energy = prop_energy;
@@ -172,7 +172,7 @@ if __name__ == '__main__':
             f = open(f'{f_base}.log','a');
             f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+','.join(map(str,prop_code_2))+f',{n_anti},{n_points},False\n');
             f.close();
-        
+
         np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
                  hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
