@@ -62,7 +62,7 @@ def get_hz_vv_cc(hz, n):
     print(f'hz_vv.shape: {hz_vv.shape}, hz_cc.shape: {hz_cc.shape}')
     return hz_vv, hz_cc
 
-def are_connected(pt1, pt2, parity_check_matrix, n):  
+def are_connected(pt1, pt2, parity_check_matrix, n):
     '''
     Check if two points are connected by the parity-check in the 5D lattice.
     '''
@@ -92,7 +92,7 @@ def gen_new_pc_matrix(cut_pts,
     '''
     n_cut = cut_pts.shape[0]
     new_parity_check_matrix = np.zeros((n_cut, n_cut), dtype=int)
-    
+
     # Connect neighboring points in cut_pts
     for i_cut in range(n_cut):
         cut_pt = cut_pts[i_cut,:]
@@ -101,7 +101,7 @@ def gen_new_pc_matrix(cut_pts,
             if i_full_neighbor in full_to_cut_ind_map:
                 i_cut_neighbor = full_to_cut_ind_map[i_full_neighbor]
                 new_parity_check_matrix[i_cut, i_cut_neighbor] = 1
-            
+
     return new_parity_check_matrix
 
 if __name__ == '__main__':
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     proj_neg_base = P[:,3:];
     proj_pos = proj_pos_base.copy();
     proj_neg = proj_neg_base.copy();
-    
+
     h1 = gen_code_3d([1,1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],n);
     h2 = gen_code_3d([1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,1,0],n);
     hx, hz = gen_hgp(h1, h2);
@@ -145,7 +145,7 @@ if __name__ == '__main__':
         cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
         cut_pts = lat_pts[cut_ind,:];
         proj_pts = project(cut_pts, proj_pos);
-        cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]];
+        n_points = len(cut_ind);
 
         if len(cut_bulk) != 0:
             new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n);
@@ -154,14 +154,14 @@ if __name__ == '__main__':
             new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
             n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
-            prop_energy = n_anti/len(cut_ind);
+            prop_energy = n_anti/n_points;
             acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
             if np.sum(new_hx_vv)/n_points >= 3.0 and np.sum(new_hx_cc)/n_points >= 3.0 and rng.random() < acc_prob:
                 if prop_energy < cur_energy:
-                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
+                    np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,
                              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
-                    
+
                 cur_angles = prop_angles.copy();
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
@@ -171,8 +171,8 @@ if __name__ == '__main__':
                 f = open(f'{f_base}.log','a');
                 f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_ind)},False\n');
                 f.close();
-            
-            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,
+
+            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,
                      hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
             if n_anti == 0:
