@@ -20,6 +20,7 @@ def get_classical_code_distance_time_limit(h, time_limit=10):
                       min_hamming_weight, flush=True)  # debug
                 row_hamming_weight = np.sum(row)
                 if row_hamming_weight < min_hamming_weight:
+                    print(np.squeeze(np.argwhere(row == 1)));
                     min_hamming_weight = row_hamming_weight
                 temp = [row]
                 for element in span:
@@ -27,6 +28,7 @@ def get_classical_code_distance_time_limit(h, time_limit=10):
                     temp.append(newvec)
                     newvec_hamming_weight = np.sum(newvec)
                     if newvec_hamming_weight < min_hamming_weight:
+                        print(np.squeeze(np.argwhere(newvec == 1)));
                         min_hamming_weight = newvec_hamming_weight
                     end = timer()
                     if (end - start) > time_limit:
