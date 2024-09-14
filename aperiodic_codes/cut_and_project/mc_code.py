@@ -3,29 +3,18 @@ Construct a pair of X and Z parity-check matrices on 3D cut-and-project tiling
 from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
-import logging.config
 from os import getpid
-from subprocess import run
-import logging
 import numpy as np
-from numpy import array,sqrt,cos,sin,pi
+from numpy import array,exp,sqrt,cos,sin,pi
 from aperiodic_codes.cut_and_project.cnp_utils import *
-from aperiodic_codes.cut_and_project.code_param_utils import *
-logging.basicConfig(level=logging.INFO)
-
-# def symmod(x,n):
-#     return (x+n)%(2*n+1)-n;
-# 
-# def coord3_to_idx(x, y, z, n):
-#     return (symmod(x,n)+n) * (2*n+1)**2 + (symmod(y,n)+n) * (2*n+1) + (symmod(z,n)+n)
 
 def coord6_to_ind(coords, n):
     '''
-    (x0, x1) -> coordinates of code1
+    (x0, x1, x2) -> coordinates of code1
     (x2, x3, x4) -> coordinates of code2
     6D ind: (x0* n**2 + x1 * n + x2) * n**3 + (x3 * n**2 + x4 * n + x5)
     Args:
-        coords: np.array, shape=(5,)
+        coords: np.array, shape=(6,)
     '''
     N = 2*n+1
     x0, x1, x2, x3, x4, x5 = coords
@@ -33,7 +22,7 @@ def coord6_to_ind(coords, n):
 
 def ind_to_coord6(ind, n):
     '''
-    ind -> (x0, x1, x2, x3, x4)
+    ind -> (x0, x1, x2, x3, x4, x5)
     '''
     N = 2*n+1
     x0 = (ind // N**3) // N**2 - n;
@@ -72,11 +61,11 @@ def get_hz_vv_cc(hz, n):
     print(f'hz_vv.shape: {hz_vv.shape}, hz_cc.shape: {hz_cc.shape}')
     return hz_vv, hz_cc
 
-def are_connected(pt1, pt2, parity_check_matrix, n):  
+def are_connected(pt1, pt2, parity_check_matrix, n):
     '''
-    Check if two points are connected by the parity-check in the 5D lattice.
+    Check if two points are connected by the parity-check in the 6D lattice.
     '''
-    assert len(pt1) == len(pt2) == 6, 'Points should be 5-element vector'
+    assert len(pt1) == len(pt2) == 6, 'Points should be 6-element vector'
     assert parity_check_matrix.shape == ((2*n+1)**6, (2*n+1)**6), \
     print(f'parity_check_matrix.shape: {parity_check_matrix.shape}')
     ind1 = coord6_to_ind(pt1, n)
@@ -85,7 +74,7 @@ def are_connected(pt1, pt2, parity_check_matrix, n):
 
 def get_neighbors(pt, parity_check_matrix, n):
     '''
-    Get neighbors in 5D.
+    Get neighbors in 6D.
     '''
     ind = coord6_to_ind(pt, n)
     neighbor_inds = np.where(parity_check_matrix[ind].todense().A1 == 1)[0]
@@ -93,8 +82,8 @@ def get_neighbors(pt, parity_check_matrix, n):
     return neighbor_inds, neighbors
 
 def gen_new_pc_matrix(cut_pts,
-                     full_to_cut_ind_map,
-                     original_parity_check_matrix, n):
+                      full_to_cut_ind_map,
+                      original_parity_check_matrix, n):
     '''
     Generate the new parity-check matrix after cutting and projecting.
     new_parity_check_matrix will contain all-zero rows,
@@ -102,7 +91,7 @@ def gen_new_pc_matrix(cut_pts,
     '''
     n_cut = cut_pts.shape[0]
     new_parity_check_matrix = np.zeros((n_cut, n_cut), dtype=int)
-    
+
     # Connect neighboring points in cut_pts
     for i_cut in range(n_cut):
         cut_pt = cut_pts[i_cut,:]
@@ -111,62 +100,96 @@ def gen_new_pc_matrix(cut_pts,
             if i_full_neighbor in full_to_cut_ind_map:
                 i_cut_neighbor = full_to_cut_ind_map[i_full_neighbor]
                 new_parity_check_matrix[i_cut, i_cut_neighbor] = 1
-            
+
     return new_parity_check_matrix
 
 if __name__ == '__main__':
-    from config import prefix, tests
-    pid = '20240903_n=4_3'
-    f_base = f'{prefix}/6d_to_3d/{pid}';
+    prefix = "/data/apc"
+    pid = getpid();
+    f_base = f'{prefix}/code/{pid}';
+    DIRS = 27;
     nTh = 8;
     n = 3;
 
     # Generate 6d lattice objects
-    lat_pts = gen_lat(low=-n, high=n, dim=6)
+    lat_pts = gen_lat(low=-n, high=n, dim=6);
     assert lat_pts.shape[0] == (2*n+1)**6, 'Number of lattice points should be N**6'
-    voronoi = gen_voronoi(dim=6)
-    offset = array(tests[str(pid)]["offset"])
+    voronoi = gen_voronoi(dim=6);
     bulk = np.all(abs(lat_pts) != n,axis=1);
     P = proj_mat();
     proj_pos = P[:,:3];
     proj_neg = P[:,3:];
-    
-    #R = gen_rotation((-3*pi/30,pi/30,2*pi/30,7*pi/30,3*pi/30,5*pi/30,3*pi/30,0.0,6*pi/30,4*pi/30),5);
-    # R = special_ortho_group.rvs(6);
-    thetas = tests[str(pid)]["thetas"]
-    R = gen_rotation(thetas, 6)
-    h1 = gen_code_3d([1,1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],n);
-    h2 = gen_code_3d([1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,1,0],n);
-    hx, hz = gen_hgp(h1, h2);
-    hx_vv, hx_cc = get_hx_vv_cc(hx, n);
-    hz_vv, hz_cc = get_hz_vv_cc(hz, n);
 
-    # offset = rng.uniform(0.0,1.0,6);
-    angles = np.zeros(nA,dtype=float);#rng.uniform(0.0,2*pi,nA).tolist();
-    R = gen_rotation(cur_angles,6);
-    proj_pos = R @ proj_pos;
-    proj_neg = R @ proj_neg;
+    # Setup RNG and MC params
+    rng = np.random.default_rng(pid);
+    offset = rng.uniform(0.0,1.0,6);
+    beta = 15.0;
+    cur_energy = np.inf;
 
     cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
     cut_pts = lat_pts[cut_ind,:];
-    proj_pts = project(cut_pts, proj_pos)
-    cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]]
-    logging.debug(f'cut_bulk: {cut_bulk}')
-    
+    proj_pts = project(cut_pts, proj_pos);
+    n_points = len(cut_ind);
 
-    new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n)
-    new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n)
-    new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n)
-    new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n)
+    # Initial codes are generated randomly
+    cur_code_1 = np.zeros(DIRS,dtype=int);
+    cur_code_2 = np.zeros(DIRS,dtype=int);
+    while np.sum(cur_code_1) < 7: cur_code_1 = rng.integers(0,1,DIRS,endpoint=True);
+    while np.sum(cur_code_2) < 7: cur_code_2 = rng.integers(0,1,DIRS,endpoint=True);
+    prop_code_1 = cur_code_1.copy();
+    prop_code_2 = cur_code_2.copy();
 
-    print(f'shape of proj_pts: {proj_pts.shape}')
-    np.savez(f'{f_base}.npz', proj_pts=proj_pts, cut_bulk=cut_bulk, offset=offset,
-             hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
-    np.save(f'{f_base}_cut_ind.npy', cut_ind)
-        
-    # Check commutation
-    print(f'n_bulk: {len(cut_bulk)}')
-    # print(f'n_anti: {check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc, cut_bulk)}')
-    #print(get_classical_code_distance_time_limit(np.hstack((new_hx_cc,new_hx_vv)),10));
-    #print(get_classical_code_distance_time_limit(np.hstack((new_hz_cc,new_hz_vv)),10)); 
-    print(check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc))
+    while True:
+        # Try proposed codes
+        h1 = gen_code_3d(prop_code_1,n);
+        h2 = gen_code_3d(prop_code_2,n);
+        hx, hz = gen_hgp(h1, h2);
+        hx_vv, hx_cc = get_hx_vv_cc(hx, n);
+        hz_vv, hz_cc = get_hz_vv_cc(hz, n);
+
+        new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n);
+        new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n);
+        new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n);
+        new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
+
+        n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
+        prop_energy = n_anti/n_points;
+        acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
+
+        # Accept with Boltzmann probability if projected code is sufficiently connected
+        if np.sum(new_hx_vv)/n_points >= 3.0 and np.sum(new_hx_cc)/n_points >= 3.0 and rng.random() < acc_prob:
+            if prop_energy < cur_energy:
+                np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
+                         hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
+
+            cur_code_1 = prop_code_1.copy();
+            cur_code_2 = prop_code_2.copy();
+            cur_energy = prop_energy;
+            f = open(f'{f_base}.log','a');
+            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+','.join(map(str,prop_code_2))+f',{n_anti},{n_points},True\n');
+            f.close();
+        else:
+            f = open(f'{f_base}.log','a');
+            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+','.join(map(str,prop_code_2))+f',{n_anti},{n_points},False\n');
+            f.close();
+
+        np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
+                 hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
+
+        if(n_anti == 0):
+            break;
+
+        # Generate proposed cut
+        count = 0;
+        while count == 0 or np.sum(prop_code_1[1:]) < 6:
+            prop_code_1 = cur_code_1.copy();
+            flip = rng.integers(0,DIRS,1)[0];
+            prop_code_1[flip] = 1-prop_code_1[flip];
+            count += 1;
+
+        count = 0;
+        while count == 0 or np.sum(prop_code_2[1:]) < 6:
+            prop_code_2 = cur_code_2.copy();
+            flip = rng.integers(0,DIRS,1)[0];
+            prop_code_2[flip] = 1-prop_code_2[flip];
+            count += 1;
