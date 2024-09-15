@@ -171,10 +171,6 @@ sbatch_scripts/
 node_modules/
 
 # executables
-<<<<<<< HEAD
-aperiodic_codes/cut_and_project/cut_multi
-=======
 aperiodic_codes/cut_and_project/cut_multi
 
 *.gtlf
->>>>>>> python
