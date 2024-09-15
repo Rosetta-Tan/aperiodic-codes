@@ -4,6 +4,7 @@ from subprocess import run
 import scipy.sparse as sp
 from scipy.linalg import expm
 from scipy.optimize import linprog
+from .config import executable
 
 def gen_rotation(thetas,d):
     assert len(thetas) == (d*(d-1))//2, "Must provide d*(d-1)/2 angles";
@@ -86,7 +87,7 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
     orth_pts = lat_pts @ proj_neg;
     orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
     np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'cut_multi {f_base} {nTh}',shell=True);
+    run(f'{executable} {f_base} {nTh}',shell=True);
     cut_inds = np.load(f'{f_base}_ind.npy');
     run(f'rm {f_base}_cut.npz',shell=True);
     run(f'rm {f_base}_ind.npy',shell=True);
