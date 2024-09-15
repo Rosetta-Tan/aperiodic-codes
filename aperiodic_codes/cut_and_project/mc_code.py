@@ -104,7 +104,7 @@ def gen_new_pc_matrix(cut_pts,
     return new_parity_check_matrix
 
 if __name__ == '__main__':
-    prefix = "/data/apc"
+    from config import prefix, executable, tests
     pid = getpid();
     f_base = f'{prefix}/code/{pid}';
     DIRS = 27;
