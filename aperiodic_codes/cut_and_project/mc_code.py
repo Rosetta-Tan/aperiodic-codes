@@ -157,11 +157,11 @@ if __name__ == '__main__':
         n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
         n_low = np.count_nonzero(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3) + \
                 np.count_nonzero(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3);
-        prop_energy = n_anti/n_points + n_low/(2*n_bulk);
+        prop_energy = n_anti/n_points + 2*n_low/n_bulk;
         acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
         # Accept with Boltzmann probability if projected code is sufficiently connected
-        if rng.random() < acc_prob:
+        if np.sum(new_hx_vv)/n_points >= 3.0 and np.sum(new_hx_cc)/n_points >= 3.0 and rng.random() < acc_prob:
             if prop_energy < cur_energy:
                 np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
                          hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
