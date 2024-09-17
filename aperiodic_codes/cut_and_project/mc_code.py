@@ -7,6 +7,7 @@ from os import getpid
 import numpy as np
 from numpy import array,exp,sqrt,cos,sin,pi
 from aperiodic_codes.cut_and_project.cnp_utils import *
+from aperiodic_codes.cut_and_project.config import tests, prefix
 
 def coord6_to_ind(coords, n):
     '''
@@ -104,11 +105,10 @@ def gen_new_pc_matrix(cut_pts,
     return new_parity_check_matrix
 
 if __name__ == '__main__':
-    from config import prefix, executable, tests
     pid = getpid();
-    f_base = f'{prefix}/code/{pid}';
+    f_base = f'{prefix}/code_2/{pid}';
     DIRS = 27;
-    nTh = 8;
+    nTh = 4;
     n = 3;
 
     # Generate 6d lattice objects
@@ -129,7 +129,9 @@ if __name__ == '__main__':
     cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
     cut_pts = lat_pts[cut_ind,:];
     proj_pts = project(cut_pts, proj_pos);
+    cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]];
     n_points = len(cut_ind);
+    n_bulk = len(cut_bulk);
 
     # Initial codes are generated randomly
     cur_code_1 = np.zeros(DIRS,dtype=int);
@@ -153,11 +155,13 @@ if __name__ == '__main__':
         new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
         n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
-        prop_energy = n_anti/n_points;
+        n_low = np.count_nonzero(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3) + \
+                np.count_nonzero(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3);
+        prop_energy = n_anti/n_points + n_low/(2*n_bulk);
         acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
         # Accept with Boltzmann probability if projected code is sufficiently connected
-        if np.sum(new_hx_vv)/n_points >= 3.0 and np.sum(new_hx_cc)/n_points >= 3.0 and rng.random() < acc_prob:
+        if rng.random() < acc_prob:
             if prop_energy < cur_energy:
                 np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
                          hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
@@ -166,11 +170,13 @@ if __name__ == '__main__':
             cur_code_2 = prop_code_2.copy();
             cur_energy = prop_energy;
             f = open(f'{f_base}.log','a');
-            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+','.join(map(str,prop_code_2))+f',{n_anti},{n_points},True\n');
+            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+ \
+                    ','.join(map(str,prop_code_2))+f',{n_low},{n_bulk},{n_anti},{n_points},True\n');
             f.close();
         else:
             f = open(f'{f_base}.log','a');
-            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+','.join(map(str,prop_code_2))+f',{n_anti},{n_points},False\n');
+            f.write(','.join(map(str,offset))+','+','.join(map(str,prop_code_1))+','+ \
+                    ','.join(map(str,prop_code_2))+f',{n_low},{n_bulk},{n_anti},{n_points},False\n');
             f.close();
 
         np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,code_1=prop_code_1,code_2=prop_code_2,
