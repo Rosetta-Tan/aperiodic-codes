@@ -157,7 +157,7 @@ if __name__ == '__main__':
         n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
         n_low = np.count_nonzero(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3) + \
                 np.count_nonzero(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3);
-        prop_energy = n_anti/n_points + 2*n_low/n_bulk;
+        prop_energy = n_anti/n_points/10 + 10*n_low/n_bulk;
         acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
         # Accept with Boltzmann probability if projected code is sufficiently connected
