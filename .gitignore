@@ -174,3 +174,5 @@ node_modules/
 aperiodic_codes/cut_and_project/cut_multi
 
 *.gtlf
+
+.virtual_documents
