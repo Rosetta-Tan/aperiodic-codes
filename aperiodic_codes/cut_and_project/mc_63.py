@@ -3,7 +3,7 @@ Construct a pair of X and Z parity-check matrices on 3D cut-and-project tiling
 from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 '''
-from os import getpid
+import os,sys
 import numpy as np
 from numpy import array,exp,sqrt,cos,sin,pi
 from scipy.linalg import norm
@@ -106,8 +106,11 @@ def gen_new_pc_matrix(cut_pts,
 
 if __name__ == '__main__':
     prefix = "/data/apc"
-    pid = getpid();
-    f_base = f'{prefix}/6d_to_3d/{pid}';
+    spec_file = sys.argv[1];
+    code_name = sys.argv[2];
+    pid = os.getpid();
+    f_base = f'{prefix}/cold_R0/{code_name}/{pid}';
+    os.makedirs(os.path.dirname(f_base), exist_ok=True);
     nTh = 8;
     n = 3;
 
@@ -122,8 +125,19 @@ if __name__ == '__main__':
     proj_pos = proj_pos_base.copy();
     proj_neg = proj_neg_base.copy();
 
-    h1 = gen_code_3d([1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,0],n);
-    h2 = gen_code_3d([1,1,1,0,1,1,1,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1],n);
+    code_spec_1 = [];
+    code_spec_2 = [];
+    with open(spec_file) as sfile:
+        for line in sfile:
+            spec = line.split();
+            if len(spec) > 2 and spec[0] == code_name:
+                code_spec_1 = [int(i) for i in spec[1].split(",")];
+                code_spec_2 = [int(i) for i in spec[2].split(",")];
+    assert len(code_spec_1) == 27 and len(code_spec_2) == 27, \
+        f'Code {code_name} not read from {spec_file}!';
+
+    h1 = gen_code_3d(code_spec_1,n);
+    h2 = gen_code_3d(code_spec_2,n);
     hx, hz = gen_hgp(h1, h2);
     hx_vv, hx_cc = get_hx_vv_cc(hx, n);
     hz_vv, hz_cc = get_hz_vv_cc(hz, n);
