@@ -89,3 +89,18 @@ def get_classical_code_distance_special_treatment(h, target_weight):
         end = timer()
         print(f'Elapsed time for finding minimum Hamming weight while buiding codeword space : {end-start} seconds', flush=True)
         return min_hamming_weight, logical_op
+
+def compute_lz(hx,hz):
+    #lz logical operators
+    #lz\in ker{hx} AND \notin Im(Hz.T)
+
+    ker_hx = nullspace(hx) #compute the kernel basis of hx
+    im_hzT = row_basis(hz) #compute the image basis of hz.T
+
+    #in the below we row reduce to find vectors in kx that are not in the image of hz.T.
+    log_stack = np.vstack([im_hzT,ker_hx])
+    pivots = row_echelon(log_stack.T)[3]
+    log_op_indices = [i for i in range(im_hzT.shape[0],log_stack.shape[0]) if i in pivots]
+    log_ops = log_stack[log_op_indices]
+
+    return log_ops
