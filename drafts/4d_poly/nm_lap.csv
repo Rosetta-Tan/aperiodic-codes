@@ -1,0 +1,6 @@
+l,bc_nm,bc_lap,n,k,dz,dx
+5,pbc,pbc,625,0,inf,inf
+7,pbc,pbc,2401,72,24.0,24.0
+9,pbc,pbc,6561,8,54.0,54.0
+10,pbc,pbc,?,0,inf,inf
+11,pbc,pbc,
