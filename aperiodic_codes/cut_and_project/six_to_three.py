@@ -116,7 +116,7 @@ def gen_new_pc_matrix(cut_pts,
 
 if __name__ == '__main__':
     from config import prefix, tests
-    pid = '0'
+    pid = "20240920_n=3_DIRS27_1"
     f_base = f'{prefix}/6d_to_3d/{pid}';
     nTh = 8;
     n = 3;
@@ -125,8 +125,8 @@ if __name__ == '__main__':
     lat_pts = gen_lat(low=-n, high=n, dim=6)
     assert lat_pts.shape[0] == (2*n+1)**6, 'Number of lattice points should be N**6'
     voronoi = gen_voronoi(dim=6)
-    # offset = array(tests[str(pid)]["offset"])
-    offset = np.zeros(6)
+    offset = array(tests[str(pid)]["offset"])
+    # offset = np.zeros(6)
     bulk = np.all(abs(lat_pts) != n,axis=1);
     P = proj_mat();
     proj_pos = P[:,:3];
@@ -134,12 +134,12 @@ if __name__ == '__main__':
     
     #R = gen_rotation((-3*pi/30,pi/30,2*pi/30,7*pi/30,3*pi/30,5*pi/30,3*pi/30,0.0,6*pi/30,4*pi/30),5);
     # R = special_ortho_group.rvs(6);
-    # thetas = tests[str(pid)]["thetas"]
-    thetas = np.zeros(15)
-    # code1 = array(tests[str(pid)]["code1"])
-    # code2 = array(tests[str(pid)]["code2"])
-    code1 = [1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1]
-    code2 = [1,1,0,0,0,0,1,1,0,0,0,1,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0]
+    thetas = tests[str(pid)]["thetas"]
+    # thetas = np.zeros(15)
+    code1 = array(tests[str(pid)]["code1"])
+    code2 = array(tests[str(pid)]["code2"])
+    # code1 = [1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1]
+    # code2 = [1,1,0,0,0,0,1,1,0,0,0,1,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0]
     R = gen_rotation(thetas, 6)
     h1 = gen_code_3d(code1 ,n);
     h2 = gen_code_3d(code2 ,n);
