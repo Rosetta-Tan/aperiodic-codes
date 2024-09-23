@@ -5,12 +5,13 @@ from ldpc.mod2 import *
 # FIXME: Reduce redundant computation, organize print statements
 
 def get_classical_code_distance_time_limit(h, time_limit=10):
-    '''
+    """
     Calculate the code distance of the classical code within the time limit.
+
     Returns:
         k: int, the dimension of the code
         d: int, the minimum Hamming distance found within the time limit
-    '''
+    """
     def _find_min_weight_while_build(matrix):
             span = []
             min_hamming_weight = np.inf
@@ -104,3 +105,23 @@ def compute_lz(hx,hz):
     log_ops = log_stack[log_op_indices]
 
     return log_ops
+
+def cplmtspace(h):
+    """
+    Compute the complement space of the row space of h (img h.T).
+    Note: row space of h means all linear combinations of checks.
+
+    Returns:
+        bases: np.array, the bases of the complement space
+    """
+    if h.shape[0] != h.shape[1]:
+        raise NotImplementedError('Only square matrices are supported')
+    else:
+        img_hT = row_basis(h)
+        f2n = np.eye(h.shape[0], dtype=int)
+        #in the below we row reduce to find vectors in ker_h that are not in the image of h.T.
+        cplmt_stack = np.vstack([img_hT,f2n])
+        pivots = row_echelon(cplmt_stack.T)[3]
+        cplmt_indices = [i for i in range(img_hT.shape[0], cplmt_stack.shape[0]) if i in pivots]
+        cplmt_vecs = cplmt_stack[cplmt_indices]
+        return cplmt_vecs

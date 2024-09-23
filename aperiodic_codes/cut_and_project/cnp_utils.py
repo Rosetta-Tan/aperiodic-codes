@@ -45,12 +45,15 @@ def gen_voronoi(dim):
     voronoi = np.array(np.meshgrid(*([[-0.5, 0.5]]*dim),indexing='ij')).reshape(dim, -1)
     return voronoi.T
 
-def coord2_to_idx(x, y, n):
-    return None if abs(x) > n or abs(y) > n else (x+n) * (2*n+1) + (y+n)
+def coord2_to_idx(x, y, n, bc='obc'):
+    if bc == 'obc':
+        return None if x < 0 or x >= n or y < 0 or y >= n else x * n + y
+    elif bc == 'pbc':
+        return x % n * n + y % n
 
 def idx_to_coord2(idx, n):
-    x = idx // (2*n+1) - n
-    y = idx % (2*n+1) - n
+    x = idx // n
+    y = idx % n
     return x, y
 
 def coord3_to_idx(x, y, z, n):
@@ -62,20 +65,20 @@ def idx_to_coord3(idx, n):
     z = idx % (2*n+1) - n;
     return x, y, z
 
-def gen_code_2d(spec,n):
+def gen_code_2d(spec, n, bc='obc'):
     d2 = np.array([[ 0, 0],
                    [ 1, 0],[-1, 0],[ 0, 1],[ 0,-1],
                    [ 1, 1],[ 1,-1],[-1, 1],[-1,-1]])
 
     row = []
     col = []
-    for i in range(-n,n+1):
-        for j in range(-n,n+1):
-            idx = coord2_to_idx(i, j, n)
-            cur_col = [y for x in np.where(spec)[0] if (y := coord2_to_idx(*(d2[x]+[i,j]),n)) is not None]
+    for i in range(n):
+        for j in range(n):
+            idx = coord2_to_idx(i, j, n, bc=bc)
+            cur_col = [y for x in np.where(spec)[0] if (y := coord2_to_idx(*(d2[x]+[i,j]),n,bc=bc)) is not None]
             row = row + [idx]*len(cur_col)
             col = col + cur_col
-    return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**2,(2*n+1)**2)).tocsc()
+    return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=(n**2, n**2)).tocsc()
 
 def gen_code_3d(spec,n):
     d3 = np.array([[ 0, 0, 0],

@@ -106,8 +106,7 @@ def gen_new_pc_matrix(cut_pts,
 
 if __name__ == '__main__':
     prefix = "../../data/apc"
-    from config import tests
-    pid = int(list(tests.keys())[0])
+    pid = getpid();
     f_base = f'{prefix}/6d_to_3d/{pid}';
     nTh = 8;
     n = 3;
@@ -123,8 +122,8 @@ if __name__ == '__main__':
     proj_pos = proj_pos_base.copy();
     proj_neg = proj_neg_base.copy();
 
-    h1 = gen_code_3d([1,1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],n);
-    h2 = gen_code_3d([1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,1,0],n);
+    h1 = gen_code_3d([0,1,1,0,0,0,1,0,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0],n);
+    h2 = gen_code_3d([1,0,0,1,1,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0],n);
     hx, hz = gen_hgp(h1, h2);
     hx_vv, hx_cc = get_hx_vv_cc(hx, n);
     hz_vv, hz_cc = get_hz_vv_cc(hz, n);
@@ -132,31 +131,34 @@ if __name__ == '__main__':
     # Setup RNG and MC params
     rng = np.random.default_rng(pid);
     nA = 6*5//2;
-    beta = 50.0;
+    beta = 60.0;
     cur_energy = np.inf;
 
     # Start from trivial rotation, random offset
     cur_angles = np.zeros(nA,dtype=float);#rng.uniform(0.0,2*pi,nA).tolist();
     prop_angles = cur_angles.copy();
     R = gen_rotation(cur_angles,6);
-    offset = rng.uniform(0.0,1.0,6);
+    offset = np.array([0.9991169266871937,0.7812324742246252,0.5487436476523516,0.9722811384587086,0.8267619553000166,0.0576183043421475])
 
     while(True):
         # Try proposed cut
         cut_ind, full_to_cut_ind_map = cut_ext(lat_pts, voronoi, proj_neg, offset, f_base, nTh);
         cut_pts = lat_pts[cut_ind,:];
         proj_pts = project(cut_pts, proj_pos);
+        cut_bulk = [i for i in range(len(cut_ind)) if bulk[cut_ind[i]]];
         n_points = len(cut_ind);
-        
+        n_bulk = len(cut_bulk);
 
-        if len(cut_bulk) != 0:
+        if n_bulk != 0:
             new_hx_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_vv, n);
             new_hx_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hx_cc, n);
             new_hz_vv = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_vv, n);
             new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
             n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
-            prop_energy = n_anti/n_points;
+            n_low = np.count_nonzero(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3) + \
+                    np.count_nonzero(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3);
+            prop_energy = n_anti/n_points + 2*n_low/n_bulk;
             acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
             if np.sum(new_hx_vv)/n_points >= 3.0 and np.sum(new_hx_cc)/n_points >= 3.0 and rng.random() < acc_prob:
@@ -167,22 +169,25 @@ if __name__ == '__main__':
                 cur_angles = prop_angles.copy();
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
-                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_ind)},True\n');
+                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+ \
+                        f',{n_low},{n_bulk},{n_anti},{n_points},True\n');
                 f.close();
             else:
                 f = open(f'{f_base}.log','a');
-                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+f',{n_anti},{len(cut_ind)},False\n');
+                f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+ \
+                        f',{n_low},{n_bulk},{n_anti},{n_points},False\n');
                 f.close();
-            
-            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,cut_bulk=cut_bulk,offset=offset,
+
+            np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,
                      hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
-            if n_anti == 0:
+            if n_anti == 0 and n_low/n_bulk < 0.15:
                 break;
 
         # Generate proposed cut and test uniformity
+        ov_min = 0.0;
         ov_var = np.inf;
-        while ov_var > 1/18:
+        while ov_min < 2e-2 or ov_var > 1/18:
             prop_angles = cur_angles.copy();
             prop_angles[rng.integers(0,nA,1)[0]] += rng.normal(0.0,0.02);
             R = gen_rotation(prop_angles,6);
@@ -190,4 +195,5 @@ if __name__ == '__main__':
             proj_neg = R @ proj_neg_base;
             norms = norm(proj_pos,axis=1);
             ovs = (proj_pos@proj_pos.T/np.outer(norms, norms))[np.triu_indices(6,k=1)];
+            ov_min = np.min(abs(ovs));
             ov_var = np.var(abs(ovs));
