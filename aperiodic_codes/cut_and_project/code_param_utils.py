@@ -1,6 +1,7 @@
 from timeit import default_timer as timer
 import numpy as np
 from ldpc.mod2 import *
+from ldpc import mod2sparse
 
 # FIXME: Reduce redundant computation, organize print statements
 
