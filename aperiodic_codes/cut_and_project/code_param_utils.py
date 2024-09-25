@@ -1,7 +1,9 @@
 from timeit import default_timer as timer
 import numpy as np
-from ldpc.mod2 import *
-from ldpc import mod2sparse
+from scipy.sparse import csr_matrix, csc_matrix, vstack
+import stim
+from ldpc.mod2 import rank
+from .z2 import row_echelon, nullspace, row_basis
 
 # FIXME: Reduce redundant computation, organize print statements
 
@@ -106,6 +108,68 @@ def compute_lz(hx,hz):
     log_ops = log_stack[log_op_indices]
 
     return log_ops
+
+def compute_lz_sp(hx,hz):
+    #lz logical operators
+    #lz\in ker{hx} AND \notin Im(Hz.T)
+    if isinstance(hx, csc_matrix):
+        hx = hx.tocsr()
+    if isinstance(hz, csc_matrix):
+        hz = hz.tocsr()
+    assert isinstance(hx, csr_matrix) and isinstance(hz, csr_matrix)
+
+    ker_hx = nullspace(hx) #compute the kernel basis of hx
+    im_hzT = row_basis(hz) #compute the image basis of hz.T
+
+    #in the below we row reduce to find vectors in kx that are not in the image of hz.T.
+    log_stack = vstack([im_hzT,ker_hx])
+    pivots = row_echelon(log_stack.T.tocsr())[3]
+    log_op_indices = [i for i in range(im_hzT.shape[0],log_stack.shape[0]) if i in pivots]
+    log_ops = log_stack[log_op_indices]
+
+    return log_ops
+
+def create_sat_prob(hx, hz):
+    """
+    Create a SAT problem from the parity check matrix h.
+    """
+    stabilizers = []
+    for row in hx:
+        stab = stim.PauliString(''.join(['I' if x == 0 else 'X' for x in row]))
+        stabilizers.append(stab)
+    for row in hz:
+        stab = stim.PauliString(''.join(['I' if x == 0 else 'Z' for x in row]))
+        stabilizers.append(stab)
+    completed_tableau = stim.Tableau.from_stabilizers(
+        stabilizers,
+        allow_redundant=True,
+        allow_underconstrained=True,
+    )
+    obs_indices = [
+        k
+        for k in range(len(completed_tableau))
+        if completed_tableau.z_output(k) not in stabilizers
+    ]
+    observable_xs: list[stim.PauliString] = [
+        completed_tableau.x_output(k)
+        for k in obs_indices
+    ]
+    observable_zs: list[stim.PauliString] = [
+        completed_tableau.z_output(k)
+        for k in obs_indices
+    ]
+    num_qubits = len(stabilizers[0])
+    circuit = stim.Circuit()
+    circuit.append("X_ERROR", range(num_qubits), 1e-3)
+    for k, observable in enumerate(observable_zs):
+        circuit.append("MPP", stim.target_combined_paulis(observable))
+        circuit.append("OBSERVABLE_INCLUDE", stim.target_rec(-1), k)
+    for stabilizer in stabilizers:
+        if stabilizer.pauli_indices('Z'):
+            circuit.append("MPP", stim.target_combined_paulis(stabilizer))
+            circuit.append("DETECTOR", stim.target_rec(-1))
+    wcnf_string = circuit.shortest_error_sat_problem(format='WDIMACS')
+    return wcnf_string
 
 def cplmtspace(h):
     """
