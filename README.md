@@ -1,5 +1,6 @@
 # Aperiodic Codes
 
+<<<<<<< HEAD
 ### How to use
 * Install module: In the project root folder that contains `setup.py`, run `pip install -e .` ('e' stands for "experimental").
 * Upgrade module: In project root folder, run `pip install -U .`
@@ -23,3 +24,10 @@
 In [aperiodic_codes/3d_view](aperiodic_codes/3d_view/):
 1. Run 3d_view.py, which generates an intermediate html file embedding rendering engine.
 2. Render file in a jupyter notebook.
+=======
+Of course, they are useful. We use them to create fractons in quantum error correction codes [arXiv:2312.08462](https://arxiv.org/abs/2312.08462).
+
+The following is our pinwheel code. Isn't it cool?
+
+![pinwheel_code](/figures/3d_pinwheel_code.png)
+>>>>>>> e4f862589944e7e8a59d9ec6b859cb25c8a3303e
