@@ -116,7 +116,8 @@ def gen_new_pc_matrix(cut_pts,
 
 if __name__ == '__main__':
     from config import prefix, tests
-    pid = "20240920_n=3_DIRS27_1"
+    # pid = "20240920_n=3_DIRS27_1"
+    pid = "20240926_n=3_DIRS27_2"
     f_base = f'{prefix}/6d_to_3d/{pid}';
     nTh = 8;
     n = 3;

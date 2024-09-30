@@ -3,7 +3,7 @@ import numpy as np
 from scipy.sparse import csr_matrix, csc_matrix, vstack
 import stim
 from ldpc.mod2 import rank
-from .z2 import row_echelon, nullspace, row_basis
+from aperiodic_codes.cut_and_project.z2 import row_echelon, nullspace, row_basis
 
 # FIXME: Reduce redundant computation, organize print statements
 
@@ -103,7 +103,8 @@ def compute_lz(hx,hz):
 
     #in the below we row reduce to find vectors in kx that are not in the image of hz.T.
     log_stack = np.vstack([im_hzT,ker_hx])
-    pivots = row_echelon(log_stack.T)[3]
+    transpose = np.ascontiguousarray(log_stack.T, dtype=np.int64)
+    pivots = row_echelon(transpose, full=False)[3]
     log_op_indices = [i for i in range(im_hzT.shape[0],log_stack.shape[0]) if i in pivots]
     log_ops = log_stack[log_op_indices]
 

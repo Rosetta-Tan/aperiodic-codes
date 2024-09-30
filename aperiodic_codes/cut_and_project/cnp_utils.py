@@ -194,4 +194,4 @@ def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk = None):
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return np.sum((hx @ hz.T) % 2) if cut_bulk == None else np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2);
+    return np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2) if isinstance(cut_bulk, np.ndarray) else np.sum(hx @ hz.T % 2)
