@@ -125,15 +125,15 @@ if __name__ == '__main__':
     proj_pos = P[:,:3];
     proj_neg = P[:,3:];
     
-    h1 = gen_code_3d([1,1,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0],n);
-    h2 = gen_code_3d([1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,1,0],n);
+    h1 = gen_code_3d([1,1,0,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],n);
+    h2 = gen_code_3d([1,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],n);
     hx, hz = gen_hgp(h1, h2);
     hx_vv, hx_cc = get_hx_vv_cc(hx, n);
     hz_vv, hz_cc = get_hz_vv_cc(hz, n);
 
     offset = rng.uniform(0.0,1.0,6);
     angles = np.zeros(nA,dtype=float);#rng.uniform(0.0,2*pi,nA).tolist();
-    R = gen_rotation(cur_angles,6);
+    R = gen_rotation(angles,6);
     proj_pos = R @ proj_pos;
     proj_neg = R @ proj_neg;
 
