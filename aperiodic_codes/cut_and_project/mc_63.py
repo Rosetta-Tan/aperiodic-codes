@@ -122,8 +122,10 @@ if __name__ == '__main__':
     proj_pos = proj_pos_base.copy();
     proj_neg = proj_neg_base.copy();
 
-    h1 = gen_code_3d([0,1,1,0,0,0,1,0,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0],n);
-    h2 = gen_code_3d([1,0,0,1,1,1,0,1,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0],n);
+    from aperiodic_codes.cut_and_project.config import tests
+    config_data = tests["20241002_n=3_DIRS27_1"]
+    h1 = gen_code_3d([config_data["code1"]],n);
+    h2 = gen_code_3d([config_data["code2"]],n);
     hx, hz = gen_hgp(h1, h2);
     hx_vv, hx_cc = get_hx_vv_cc(hx, n);
     hz_vv, hz_cc = get_hz_vv_cc(hz, n);
@@ -135,10 +137,12 @@ if __name__ == '__main__':
     cur_energy = np.inf;
 
     # Start from trivial rotation, random offset
-    cur_angles = np.zeros(nA,dtype=float);#rng.uniform(0.0,2*pi,nA).tolist();
+    # cur_angles = np.zeros(nA,dtype=float);#rng.uniform(0.0,2*pi,nA).tolist();
+    cur_angles = config_data["thetas"];
     prop_angles = cur_angles.copy();
     R = gen_rotation(cur_angles,6);
-    offset = np.array([0.9991169266871937,0.7812324742246252,0.5487436476523516,0.9722811384587086,0.8267619553000166,0.0576183043421475])
+    # offset = np.array([0.9991169266871937,0.7812324742246252,0.5487436476523516,0.9722811384587086,0.8267619553000166,0.0576183043421475])
+    offset = config_data["offset"]
 
     while(True):
         # Try proposed cut
@@ -156,12 +160,12 @@ if __name__ == '__main__':
             new_hz_cc = gen_new_pc_matrix(cut_pts, full_to_cut_ind_map, hz_cc, n);
 
             n_anti = check_comm_after_proj(new_hx_vv, new_hx_cc, new_hz_vv, new_hz_cc);
-            n_low = np.count_nonzero(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3) + \
-                    np.count_nonzero(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3);
-            prop_energy = n_anti/n_points + 2*n_low/n_bulk;
+            # n_low = np.count_nonzero(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3) + \
+            #         np.count_nonzero(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) < 3)
+            prop_energy = n_anti/n_points
             acc_prob = min(1.0,exp(-beta*(prop_energy-cur_energy)));
 
-            if np.sum(new_hx_vv)/n_points >= 3.0 and np.sum(new_hx_cc)/n_points >= 3.0 and rng.random() < acc_prob:
+            if np.all(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) >= 2) and np.all(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) >= 2) and rng.random() < acc_prob:
                 if prop_energy < cur_energy:
                     np.savez(f'{f_base}_opt.npz', proj_pts=proj_pts,
                              hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
@@ -170,18 +174,18 @@ if __name__ == '__main__':
                 cur_energy = prop_energy;
                 f = open(f'{f_base}.log','a');
                 f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+ \
-                        f',{n_low},{n_bulk},{n_anti},{n_points},True\n');
+                        f',{n_bulk},{n_anti},{n_points},True\n');
                 f.close();
             else:
                 f = open(f'{f_base}.log','a');
                 f.write(','.join(map(str,offset))+','+','.join(map(str,prop_angles))+ \
-                        f',{n_low},{n_bulk},{n_anti},{n_points},False\n');
+                        f',{n_bulk},{n_anti},{n_points},False\n');
                 f.close();
 
             np.savez(f'{f_base}_cur.npz', proj_pts=proj_pts,
                      hx_vv=new_hx_vv,hx_cc=new_hx_cc,hz_vv=new_hz_vv,hz_cc=new_hz_cc);
 
-            if n_anti == 0 and n_low/n_bulk < 0.15:
+            if n_anti == 1:
                 break;
 
         # Generate proposed cut and test uniformity
