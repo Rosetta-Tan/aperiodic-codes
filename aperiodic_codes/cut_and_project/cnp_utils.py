@@ -65,7 +65,8 @@ def gen_code_3d(spec,n):
         for j in range(-n,n+1):
             for k in range(-n,n+1):
                 idx = coord3_to_idx(i, j, k, n);
-                cur_col = [y for x in np.where(spec)[0] if (y := coord3_to_idx(*(d3[x]+[i,j,k]),n)) is not None];
+
+                cur_col = [y for x in np.flatnonzero(spec) if (y := coord3_to_idx(*(d3[x]+[i,j,k]),n)) is not None];
                 row = row + [idx]*len(cur_col);
                 col = col + cur_col;
     return sp.coo_matrix((np.ones_like(row,dtype=int),(row,col)) , shape=((2*n+1)**3,(2*n+1)**3)).tocsc();
@@ -167,4 +168,11 @@ def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk = None):
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return np.sum((hx @ hz.T) % 2) if cut_bulk == None else np.sum((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2);
+    return np.nonzero((hx @ hz.T) % 2) if cut_bulk == None else np.nonzero((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2);
+
+def get_stabilizer_overlap(x_idx,z_idx,hx_vv,hx_cc,hz_vv,hz_cc):
+    x_vv = hx_vv[x_idx,:].nonzero()[1];
+    x_cc = hx_cc[x_idx,:].nonzero()[1];
+    z_vv = hz_vv[z_idx,:].nonzero()[1];
+    z_cc = hz_cc[z_idx,:].nonzero()[1];
+    return np.intersect1d(x_vv,z_vv),np.intersect1d(x_cc,z_cc);

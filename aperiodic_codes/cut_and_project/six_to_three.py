@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     offset = rng.uniform(0.0,1.0,6);
     angles = np.zeros(nA,dtype=float);#rng.uniform(0.0,2*pi,nA).tolist();
-    R = gen_rotation(cur_angles,6);
+    R = gen_rotation(angles,6);
     proj_pos = R @ proj_pos;
     proj_neg = R @ proj_neg;
 
