@@ -1,4 +1,4 @@
-'''
+c'''
 Construct a pair of X and Z parity-check matrices on 3D cut-and-project tiling
 from HGP of two classical codes on the 3D cubic lattice.
 H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
@@ -107,7 +107,7 @@ def gen_new_pc_matrix(cut_pts,
     return new_parity_check_matrix
 
 if __name__ == '__main__':
-    prefix = "/data/apc"
+    prefix = "../../data/apc"
     spec_file = sys.argv[1];
     code_name = sys.argv[2];
     pid = os.getpid();

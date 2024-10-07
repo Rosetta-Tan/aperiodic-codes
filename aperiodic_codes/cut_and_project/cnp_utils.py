@@ -87,7 +87,7 @@ def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
     orth_pts = lat_pts @ proj_neg;
     orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
     np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'cut_multi {f_base} {nTh}',shell=True);
+    run(f'./cut_multi {f_base} {nTh}',shell=True);
     cut_inds = np.load(f'{f_base}_ind.npy');
     run(f'rm {f_base}_cut.npz',shell=True);
     run(f'rm {f_base}_ind.npy',shell=True);
@@ -168,7 +168,7 @@ def check_comm_after_proj(hx_vv, hx_cc, hz_vv, hz_cc,cut_bulk = None):
     assert hx_vv.shape == hx_cc.shape == hz_vv.shape == hz_cc.shape
     hx = np.hstack((hx_vv, hx_cc))
     hz = np.hstack((hz_vv, hz_cc))
-    return np.nonzero((hx @ hz.T) % 2) if cut_bulk == None else np.nonzero((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2);
+    return np.nonzero((hx @ hz.T) % 2) if cut_bulk is None else np.nonzero((hx @ hz.T)[np.ix_(cut_bulk,cut_bulk)] % 2);
 
 def get_stabilizer_overlap(x_idx,z_idx,hx_vv,hx_cc,hz_vv,hz_cc):
     x_vv = hx_vv[x_idx,:].nonzero()[1];
