@@ -1,9 +1,44 @@
 # 3D cut and project tiling
+import ctypes
 import numpy as np
-from subprocess import run
+from numpy.ctypeslib import ndpointer
 import scipy.sparse as sp
 from scipy.linalg import expm
 from scipy.optimize import linprog
+
+def coord3_to_idx(x, y, z, n):
+    return None if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
+
+def idx_to_coord3(idx, n):
+    x = idx // (2*n+1)**2 - n;
+    y = (idx % (2*n+1)**2) // (2*n+1) - n;
+    z = idx % (2*n+1) - n;
+    return x, y, z
+
+def coord6_to_ind(coords, n):
+    '''
+    (x0, x1, x2) -> coordinates of code1
+    (x2, x3, x4) -> coordinates of code2
+    6D ind: (x0* n**2 + x1 * n + x2) * n**3 + (x3 * n**2 + x4 * n + x5)
+    Args:
+        coords: np.array, shape=(6,)
+    '''
+    N = 2*n+1
+    x0, x1, x2, x3, x4, x5 = coords
+    return ((x0+n) * N**2 + (x1+n) * N + (x2+n)) * N**3 + ((x3+n) * N**2 + (x4+n) * N + (x5+n))
+
+def ind_to_coord6(ind, n):
+    '''
+    ind -> (x0, x1, x2, x3, x4, x5)
+    '''
+    N = 2*n+1
+    x0 = (ind // N**3) // N**2 - n;
+    x1 = ((ind // N**3) % N**2) // N - n;
+    x2 = ((ind // N**3) % N**2) % N - n;
+    x3 = (ind % N**3) // N**2 - n;
+    x4 = ((ind % N**3) % N**2) // N - n;
+    x5 = ((ind % N**3) % N**2) % N - n;
+    return array([x0, x1, x2, x3, x4, x5])
 
 def gen_rotation(thetas,d):
     assert len(thetas) == (d*(d-1))//2, "Must provide d*(d-1)/2 angles";
@@ -44,15 +79,6 @@ def gen_voronoi(dim):
     voronoi = np.array(np.meshgrid(*([[-0.5, 0.5]]*dim),indexing='ij')).reshape(dim, -1)
     return voronoi.T
 
-def coord3_to_idx(x, y, z, n):
-    return None if abs(x) > n or abs(y) > n or abs(z) > n else (x+n) * (2*n+1)**2 + (y+n) * (2*n+1) + (z+n);
-
-def idx_to_coord3(idx, n):
-    x = idx // (2*n+1)**2 - n;
-    y = (idx % (2*n+1)**2) // (2*n+1) - n;
-    z = idx % (2*n+1) - n;
-    return x, y, z
-
 def gen_code_3d(spec,n):
     d3 = np.array([[ 0, 0, 0],
                    [ 1, 0, 0],[-1, 0, 0],[ 0, 1, 0],[ 0,-1, 0],[ 0, 0, 1],[ 0, 0,-1],
@@ -83,72 +109,25 @@ def gen_hgp(h1, h2):
     hz = sp.hstack((sp.kron(sp.eye(h1.shape[1]),h2),sp.kron(h1.T.tocsc(),sp.eye(h2.shape[0])))).tocsc();
     return hx, hz
 
-def cut_ext(lat_pts , voronoi , proj_neg , offset, f_base, nTh):
+def H_vv_cc(H):
+    '''
+    Generate the parity check matrix for VV and CC type qubits.
+    '''
+    return H[:, 0:H.shape[1]//2], H[:, H.shape[1]//2:];
+
+cpp_cut = ctypes.CDLL("./libcnp.so").cut;
+cpp_cut.argtypes = [ndpointer(ctypes.c_double), ndpointer(ctypes.c_double), ndpointer(ctypes.c_int),
+                    ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int];
+
+def cut(lat_pts , voronoi , proj_neg , offset, nTh):
     orth_pts = lat_pts @ proj_neg;
     orth_window = proj_neg.T @ (voronoi + np.tile([offset],(voronoi.shape[0],1))).T;
-    np.savez(f'{f_base}_cut.npz',orth_pts=orth_pts,orth_window=orth_window);
-    run(f'./cut_multi {f_base} {nTh}',shell=True);
-    cut_inds = np.load(f'{f_base}_ind.npy');
-    run(f'rm {f_base}_cut.npz',shell=True);
-    run(f'rm {f_base}_ind.npy',shell=True);
+    cut_mask = np.zeros(len(orth_pts),dtype=np.int32);
+    cpp_cut(orth_pts,orth_window,cut_mask,
+            orth_pts.shape[0],orth_window.shape[0],orth_window.shape[1],nTh);
+    cut_inds = np.argwhere(cut_mask).flatten();
 
     return cut_inds , {cut_inds[i]:i for i in range(len(cut_inds))};
-
-def is_point_in_hull(points, x):
-    n_points = len(points)
-    n_dim = len(x)
-    c = np.zeros(n_points)
-    A = np.r_[points.T,np.ones((1,n_points))]
-    b = np.r_[x, np.ones(1)]
-    lp = linprog(c, A_eq=A, b_eq=b)
-    return lp.success
-
-def cut(lat_pts, voronoi, proj, offset_vec=None):
-    '''
-    Select lattice points in the 6D lattice.
-    There are two qubits per vertex in the 6D lattice.
-    A stabilizer will involve both VV and CC type qubits.
-    We keep the feature that there are two qubits per vertex in 3D.
-
-    VV type qubits are the first n**6 qubits.
-    CC type qubits are the last n**6 qubits.
-        - condition: the lattice point is inside the ocnvex hull of
-        the Voronoi unit cell projected to the perpendiculr 3D space.
-    Args:
-        lat_pts: np.array, shape=(6, n**6)
-        - lattice points in 6D
-        voronoi: np.array, shape=(6, 2**6)
-        - voronoi cell around origin in 6D
-        proj: np.array, shape=(3, 6)
-        - projection isometry matrix into the corresponding eigval 3D subspace
-        (default: negative eigenvalue)
-    Returns:
-        cut_pts: np.array, shape=(6, n_cut)
-        - selected points in 6D
-        - cut_pts[0]: x0 coordinates
-        - cut_pts[1]: x1 coordinates
-        - ...
-        - cut_pts[5]: x5 coordinates
-    '''
-    if offset_vec is not None:
-        voronoi_shifted = voronoi + np.tile([offset_vec],(voronoi.shape[0],1));
-    else:
-        voronoi_shifted = voronoi;
-
-    window = voronoi_shifted @ proj;
- 
-    # Select lattice points inside the convex hull
-    full_to_cut_ind_map = {}
-    cut_pts = []
-    proj_pts = lat_pts @ proj
-    for i in range(proj_pts.shape[0]):
-        pt_proj = proj_pts[i,:];
-        if is_point_in_hull(window,pt_proj):
-            full_to_cut_ind_map.update({i: len(cut_pts)})
-            cut_pts.append(lat_pts[i,:])
-    cut_pts = np.asarray(cut_pts) # shape=(6, n_cut)
- 
-    return cut_pts, full_to_cut_ind_map
 
 def project(cut_pts, proj):
     '''
