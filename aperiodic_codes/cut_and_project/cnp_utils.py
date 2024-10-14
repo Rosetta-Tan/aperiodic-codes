@@ -1,5 +1,5 @@
 # 3D cut and project tiling
-import ctypes
+import os,ctypes
 import numpy as np
 from numpy.ctypeslib import ndpointer
 import scipy.sparse as sp
@@ -115,7 +115,9 @@ def H_vv_cc(H):
     '''
     return H[:, 0:H.shape[1]//2], H[:, H.shape[1]//2:];
 
-cpp_cut = ctypes.CDLL("./libcnp.so").cut;
+basedir = os.path.abspath(os.path.dirname(__file__));
+libpath = os.path.join(basedir, 'libcnp.so');
+cpp_cut = ctypes.CDLL(libpath).cut;
 cpp_cut.argtypes = [ndpointer(ctypes.c_double), ndpointer(ctypes.c_double), ndpointer(ctypes.c_int),
                     ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int];
 
