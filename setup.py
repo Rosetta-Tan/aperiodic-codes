@@ -20,5 +20,6 @@ setup(
     author='Yi Tan',
     author_email='rosetta_tan@outlook.com',
     packages=find_packages(include=['aperiodic_codes', 'aperiodic_codes.*']),
+    package_data={'aperiodic_codes':['cut_and_project/libcnp.so']},
     install_requires=INSTALL_REQUIRES
 )
