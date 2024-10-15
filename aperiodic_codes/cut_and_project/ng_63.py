@@ -26,6 +26,7 @@ if __name__ == '__main__':
     spec_file = sys.argv[1];
     code_name = sys.argv[2];
     pid = os.getpid();
+    print(pid);
     np.random.seed(pid);
     f_base = f'{prefix}/ng/{code_name}/{pid}';
     os.makedirs(os.path.dirname(f_base), exist_ok=True);
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     hz_vv, hz_cc = H_vv_cc(hz);
     offset = np.random.rand(6);
 
-    MAGIC_MIN = 5e-2;
+    MAGIC_MIN = 0.025;
     MAGIC_VAR = 1/18;
     MAGIC_PTS = 3231;
 
@@ -69,7 +70,6 @@ if __name__ == '__main__':
         P_plus = R @ proj_pos;
         P_minus = R @ proj_neg;
 
-        pid2 = os.getpid();
         cut_ind, full_to_cut_ind_map = cut(lat_pts, voronoi, P_minus, offset, nTh);
         cut_pts = lat_pts[cut_ind,:];
         proj_pts = project(cut_pts, P_plus);
@@ -97,22 +97,21 @@ if __name__ == '__main__':
         return [n_ones/n_bulk,n_anti/n_points,(MAGIC_PTS-n_points)/MAGIC_PTS];
 
     def min_const(angles):
-        R = gen_rotation(angles[0][0],6);
+        R = gen_rotation(angles,6);
         P_plus = R @ proj_pos;
         norms = norm(P_plus,axis=1);
         ovs = abs(P_plus@P_plus.T/np.outer(norms, norms))[np.triu_indices(6,k=1)];
         return MAGIC_MIN - np.min(ovs);
 
     def var_const(angles):
-        R = gen_rotation(angles[0][0],6);
+        R = gen_rotation(angles,6);
         P_plus = R @ proj_pos;
         norms = norm(P_plus,axis=1);
         ovs = abs(P_plus@P_plus.T/np.outer(norms, norms))[np.triu_indices(6,k=1)];
         return np.var(ovs) - MAGIC_VAR;
    
-    instrum = ng.p.Instrumentation(ng.p.Angles(init=np.zeros(nA,dtype=float)));
-    de_opt = ng.families.DifferentialEvolution(scale=0.01,recommendation='noisy',crossover='rotated_twopoints',popsize='large');
-    optimizer = de_opt(parametrization=instrum, budget=2000, num_workers=32);
+    DE_opt = ng.families.DifferentialEvolution(scale=0.005,initialization='gaussian',crossover='rotated_twopoints',popsize='large');
+    optimizer = DE_opt(parametrization=ng.p.Angles(init=np.zeros(nA,dtype=float)), budget=40000, num_workers=32);
     optimizer.tell(ng.p.MultiobjectiveReference(), [2.0, 10.0, 1.0]);
 
     with futures.ThreadPoolExecutor(max_workers=optimizer.num_workers) as executor:
