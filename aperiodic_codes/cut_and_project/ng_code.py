@@ -86,7 +86,7 @@ if __name__ == '__main__':
     optimizer = DE_opt(parametrization=ng.p.Choice([0,1],repetitions=52), budget=60000, num_workers=32);
     optimizer.parametrization.register_cheap_constraint(code1_weight);
     optimizer.parametrization.register_cheap_constraint(code2_weight);
-    optimizer.tell(ng.p.MultiobjectiveReference(), [27.0, 2.0]);
+    optimizer.tell(ng.p.MultiobjectiveReference(), [54.0, 2.0]);
 
     with futures.ThreadPoolExecutor(max_workers=optimizer.num_workers) as executor:
         optimizer.minimize(eval_code , executor=executor, verbosity=0 , batch_mode=False);
