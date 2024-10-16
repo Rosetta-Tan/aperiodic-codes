@@ -6,7 +6,7 @@ H1, H2: polynomial -> HGP -> 6D Hx, Hz -> cut & project -> 3D new Hx, Hz
 import os,sys
 import numpy as np
 from concurrent import futures
-from numpy import array,exp,sqrt,cos,sin,pi
+from numpy import array,sqrt,cos,sin,pi
 from aperiodic_codes.cut_and_project.cnp_utils import *
 from scipy.linalg import norm
 import nevergrad as ng
@@ -26,7 +26,6 @@ if __name__ == '__main__':
     spec_file = sys.argv[1];
     code_name = sys.argv[2];
     pid = os.getpid();
-    print(pid);
     np.random.seed(pid);
     f_base = f'{prefix}/ng/{code_name}/{pid}';
     os.makedirs(os.path.dirname(f_base), exist_ok=True);
@@ -51,8 +50,7 @@ if __name__ == '__main__':
             if len(spec) > 2 and spec[0] == code_name:
                 code_spec_1 = [int(i) for i in spec[1].split(",")];
                 code_spec_2 = [int(i) for i in spec[2].split(",")];
-    assert len(code_spec_1) == 27 and len(code_spec_2) == 27, \
-        f'Code {code_name} not read from {spec_file}!';
+    assert len(code_spec_1) == 27 and len(code_spec_2) == 27, f'Code {code_name} not read from {spec_file}!';
 
     h1 = gen_code_3d(code_spec_1,n);
     h2 = gen_code_3d(code_spec_2,n);
@@ -63,7 +61,9 @@ if __name__ == '__main__':
 
     MAGIC_MIN = 0.025;
     MAGIC_VAR = 1/18;
-    MAGIC_PTS = 3231;
+    MAGIC_PTS = 3231; 
+    mask_it = np.arange(6);
+    gram_mask = mask_it[:,None] < mask_it;
 
     def eval_cut(angles):
         R = gen_rotation(angles,6);
@@ -86,35 +86,34 @@ if __name__ == '__main__':
         n_ones = np.count_nonzero(np.sum(new_hz_cc[np.ix_(cut_bulk,cut_bulk)],axis=0) == 1) + \
                 np.count_nonzero(np.sum(new_hz_vv[np.ix_(cut_bulk,cut_bulk)],axis=0) == 1);
 
-        norms = norm(P_plus,axis=1);
-        ovs = abs(P_plus@P_plus.T/np.outer(norms, norms))[np.triu_indices(6,k=1)];
-
         f = open(f'{f_base}.log','a');
-        f.write(','.join(map(str,offset))+','+','.join(map(str,angles))+ \
-                f',{n_ones},{n_bulk},{n_anti},{n_points},{np.var(ovs)-MAGIC_VAR},{MAGIC_MIN-np.min(ovs)}\n');
+        f.write(','.join(map(str,offset))+','+','.join(map(str,angles))+f',{n_ones},{n_bulk},{n_anti},{n_points}\n');
         f.close();
 
-        return [n_ones/n_bulk,n_anti/n_points,(MAGIC_PTS-n_points)/MAGIC_PTS];
+        return [n_anti/n_points,n_ones/n_bulk,(MAGIC_PTS-n_points)/MAGIC_PTS];
 
-    def min_const(angles):
-        R = gen_rotation(angles,6);
-        P_plus = R @ proj_pos;
-        norms = norm(P_plus,axis=1);
-        ovs = abs(P_plus@P_plus.T/np.outer(norms, norms))[np.triu_indices(6,k=1)];
-        return MAGIC_MIN - np.min(ovs);
+    def gram_min(angles):
+        P_plus = gen_rotation(angles,6) @ proj_pos;
+        P_plus = P_plus / norm(P_plus,axis=1,keepdims=True);
+        ov = abs(P_plus@P_plus.T);
+        return np.min(ov) - MAGIC_MIN;
 
-    def var_const(angles):
-        R = gen_rotation(angles,6);
-        P_plus = R @ proj_pos;
-        norms = norm(P_plus,axis=1);
-        ovs = abs(P_plus@P_plus.T/np.outer(norms, norms))[np.triu_indices(6,k=1)];
-        return np.var(ovs) - MAGIC_VAR;
-   
+    def gram_var(angles):
+        P_plus = gen_rotation(angles,6) @ proj_pos;
+        P_plus = P_plus / norm(P_plus,axis=1,keepdims=True);
+        ov = abs(P_plus@P_plus.T);
+        return MAGIC_VAR - np.var(ov,where=gram_mask);
+
     DE_opt = ng.families.DifferentialEvolution(scale=0.005,initialization='gaussian',crossover='rotated_twopoints',popsize='large');
-    optimizer = DE_opt(parametrization=ng.p.Angles(init=np.zeros(nA,dtype=float)), budget=40000, num_workers=32);
-    optimizer.tell(ng.p.MultiobjectiveReference(), [2.0, 10.0, 1.0]);
+    optimizer = DE_opt(parametrization=ng.p.Angles(init=np.zeros(nA,dtype=float)), budget=60000, num_workers=32);
+    optimizer.parametrization.register_cheap_constraint(gram_min);
+    optimizer.parametrization.register_cheap_constraint(gram_var);
+    optimizer.tell(ng.p.MultiobjectiveReference(), [8.0, 2.0, 1.0]);
 
     with futures.ThreadPoolExecutor(max_workers=optimizer.num_workers) as executor:
-        recommendation = optimizer.minimize(eval_cut, constraint_violation=[min_const,var_const],
-                                            executor=executor, verbosity=2, batch_mode=False);
-        print(recommendation)
+        optimizer.minimize(eval_cut , executor=executor, verbosity=0 , batch_mode=False);
+
+    f = open(f'{f_base}.sol','w');
+    for param in sorted(optimizer.pareto_front(), key=lambda p: p.losses[0]):
+        f.write(','.join(map(str,param.value))+','+','.join(map(str,param.losses))+'\n');
+    f.close();
